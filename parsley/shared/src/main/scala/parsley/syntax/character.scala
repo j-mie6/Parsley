@@ -26,7 +26,7 @@ object character {
       *
       * @see [[parsley.character.string `character.string`]]
       */
-    @inline implicit def stringLift(str: String): Parsley[String] = string(str)
+    @inline implicit def stringLift(str: String): Parsley[String] = string(str).uo(s""""$str"""")
     /** Converts a character literal into a parser that reads that character.
       *
       * Allows for the implicit application of the `char` combinator to a
@@ -34,6 +34,6 @@ object character {
       *
       * @see [[parsley.character.char `character.char`]]
       */
-    @inline implicit def charLift(c: Char): Parsley[Char] = char(c)
+    @inline implicit def charLift(c: Char): Parsley[Char] = char(c).uo(s"\'$c\'")
     // $COVERAGE-ON$
 }

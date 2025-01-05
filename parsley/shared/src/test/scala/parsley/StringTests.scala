@@ -9,7 +9,7 @@ import Predef.{ArrowAssoc => _, _}
 
 import parsley.character.{string, strings, stringOfMany, stringOfSome}
 import parsley.syntax.character.stringLift
-import parsley.Parsley.{pos => _, _}
+import parsley.Parsley._
 import parsley.position.pos
 
 class StringTests extends ParsleyTest {

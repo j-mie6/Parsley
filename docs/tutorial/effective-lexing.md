@@ -343,14 +343,14 @@ last time:
 
 ```scala mdoc:nest
 object lexer {
-    import parsley.token.{Lexer, predicate}
+    import parsley.token.{Lexer, Basic}
     import parsley.token.descriptions.{LexicalDesc, NameDesc, SymbolDesc}
 
     private val desc = LexicalDesc.plain.copy(
         nameDesc = NameDesc.plain.copy(
             // Unicode is also possible instead of Basic
-            identifierStart = predicate.Basic(_.isLetter),
-            identifierLetter = predicate.Basic(_.isLetter),
+            identifierStart = Basic(_.isLetter),
+            identifierLetter = Basic(_.isLetter),
         ),
         symbolDesc = SymbolDesc.plain.copy(
             hardKeywords = Set("negate"),

@@ -50,12 +50,11 @@ private [deepembedding] object ContOps {
     @inline def perform[Cont[_, +_], R](wrapped: Cont[R, R])(implicit canUnwrap: ContOps[Cont]): R = canUnwrap.unwrap(wrapped)
     @inline def suspend[Cont[_, +_], R, A](x: =>Cont[R, A])(implicit ops: ContOps[Cont]): Cont[R, A] = ops.suspend(x)
     // Zips. Add more as needed.
-    @inline def zipWith[Cont[_, +_], R, A, B, C](f: (A, B) => C)(xa: Cont[R, A], xb: =>Cont[R, B])(implicit ops: ContOps[Cont]): Cont[R, C] =
+    @inline def zipWith[Cont[_, +_], R, A, B, C](xa: Cont[R, A], xb: =>Cont[R, B])(f: (A, B) => C)(implicit ops: ContOps[Cont]): Cont[R, C] = {
         ops.zipWith(xa, xb, f)
-    @inline def zipWith3[Cont[_, +_], R, A, B, C, D](f: (A, B, C) => D)(xa: Cont[R, A],
-                                                                        xb: =>Cont[R, B],
-                                                                        xc: =>Cont[R, C])(implicit ops: ContOps[Cont]): Cont[R, D] =
-        ops.zipWith3(xa, xb, xc, f)
+    }
+    @inline def zipWith3[Cont[_, +_], R, A, B, C, D](xa: Cont[R, A], xb: =>Cont[R, B], xc: =>Cont[R, C])(f: (A, B, C) => D)
+                                                    (implicit ops: ContOps[Cont]): Cont[R, D] = ops.zipWith3(xa, xb, xc, f)
 }
 
 private [deepembedding] object Cont {

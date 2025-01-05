@@ -89,4 +89,9 @@ import parsley.syntax.zipped._
 (char('a').as(5), char('b').as(6)).zipped(_ + _).parse("ab")
 ```
 
+@:callout(warning)
+The `zipped` syntax, unlike the `liftN` combinators or `lift` syntax, is not lazy in _any_ of its arguments, so care
+may be needed to use `LazyParsley.unary_~` to restore laziness to those arguments that need it.
+@:@
+
 Both `lift` and `zipped` work for up to 22-argument functions.

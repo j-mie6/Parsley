@@ -9,7 +9,7 @@ import Predef.{ArrowAssoc => _, _}
 
 import parsley.ParsleyTest
 import parsley.token.LexemeImpl
-import parsley.token.descriptions.numeric._
+import parsley.token.descriptions._
 import parsley.token.errors.ErrorConfig
 import org.scalactic.source.Position
 
@@ -23,11 +23,11 @@ class SignedIntegerTests extends ParsleyTest {
     val noPlus = makeInteger(plain.copy(positiveSign = PlusSignPresence.Illegal))
     val alwaysPlus = makeInteger(plain.copy(positiveSign = PlusSignPresence.Required))
 
-    private def decimalCases(int: Integer)(tests: (String, Option[BigInt], Position)*): Unit = cases(int.decimal)(tests: _*)
-    private def hexadecimalCases(int: Integer)(tests: (String, Option[BigInt], Position)*): Unit = cases(int.hexadecimal)(tests: _*)
-    private def octalCases(int: Integer)(tests: (String, Option[BigInt], Position)*): Unit = cases(int.octal)(tests: _*)
-    private def binaryCases(int: Integer)(tests: (String, Option[BigInt], Position)*): Unit = cases(int.binary)(tests: _*)
-    private def numberCases(int: Integer)(tests: (String, Option[BigInt], Position)*): Unit = cases(int.number)(tests: _*)
+    private def decimalCases(int: IntegerParsers)(tests: (String, Option[BigInt], Position)*): Unit = cases(int.decimal)(tests: _*)
+    private def hexadecimalCases(int: IntegerParsers)(tests: (String, Option[BigInt], Position)*): Unit = cases(int.hexadecimal)(tests: _*)
+    private def octalCases(int: IntegerParsers)(tests: (String, Option[BigInt], Position)*): Unit = cases(int.octal)(tests: _*)
+    private def binaryCases(int: IntegerParsers)(tests: (String, Option[BigInt], Position)*): Unit = cases(int.binary)(tests: _*)
+    private def numberCases(int: IntegerParsers)(tests: (String, Option[BigInt], Position)*): Unit = cases(int.number)(tests: _*)
 
     //private def decimalCases(desc: NumericDesc)(tests: (String, Option[BigInt], Position)*): Unit = decimalCases(makeInteger(desc))(tests: _*)
     //private def hexadecimalCases(desc: NumericDesc)(tests: (String, Option[BigInt], Position)*): Unit = hexadecimalCases(makeInteger(desc))(tests: _*)

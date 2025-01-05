@@ -8,7 +8,7 @@ package parsley.token.text
 import parsley.Parsley
 import parsley.token.Lexeme
 
-private [token] final class LexemeCharacter(character: Character, lexeme: Lexeme) extends Character {
+private [token] final class LexemeCharacter(character: CharacterParsers, lexeme: Lexeme) extends CharacterParsers {
     override lazy val fullUtf16: Parsley[Int] = lexeme(character.fullUtf16)
     override lazy val basicMultilingualPlane: Parsley[Char] = lexeme(character.basicMultilingualPlane)
     override lazy val ascii: Parsley[Char] = lexeme(character.ascii)

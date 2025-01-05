@@ -72,17 +72,17 @@ private [internal] object Apply extends Instr {
 }
 
 // Monadic
-private [internal] final class DynCall(f: Any => Array[Instr]) extends Instr {
+private [internal] final class DynCall(f: (Any, Int) => Array[Instr]) extends Instr {
     override def apply(ctx: Context): Unit = {
         ensureRegularInstruction(ctx)
-        ctx.call(f(ctx.stack.upop()))
+        ctx.call(f(ctx.stack.upop(), ctx.regs.size))
     }
     // $COVERAGE-OFF$
     override def toString: String = "DynCall(?)"
     // $COVERAGE-ON$
 }
 private [internal] object DynCall {
-    def apply[A](f: A => Array[Instr]): DynCall = new DynCall(f.asInstanceOf[Any => Array[Instr]])
+    def apply[A](f: (A, Int) => Array[Instr]): DynCall = new DynCall(f.asInstanceOf[(Any, Int) => Array[Instr]])
 }
 
 // Control Flow
@@ -279,7 +279,7 @@ private [internal] final class RestoreAndPushHandler(var label: Int) extends Ins
     // $COVERAGE-ON$
 }
 
-private [internal] object Refail extends Instr {
+/*private [internal] object Refail extends Instr {
     override def apply(ctx: Context): Unit = {
         ensureHandlerInstruction(ctx)
         ctx.handlers = ctx.handlers.tail
@@ -289,4 +289,4 @@ private [internal] object Refail extends Instr {
     // $COVERAGE-OFF$
     override def toString: String = "Refail"
     // $COVERAGE-ON$
-}
+}*/

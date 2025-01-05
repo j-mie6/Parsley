@@ -10,7 +10,7 @@ import org.scalatest.matchers._
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import parsley.Parsley.eof
-import parsley.token.descriptions.text._
+import parsley.token.descriptions._
 import parsley.token.errors.ErrorConfig
 import org.scalacheck.Gen
 

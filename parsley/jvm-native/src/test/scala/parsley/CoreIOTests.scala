@@ -18,13 +18,4 @@ class CoreIOTests extends ParsleyTest {
     it should "fail with an error when file does not exist" in {
         Parsley.empty.parseFile(new File("foo.diuh")) shouldBe a [scala.util.Failure[_]]
     }
-
-    // FIXME: this case is occasionally problematic on scala 3... I suspect a bug, seems like a race-condition
-    /*"stack overflows" should "not occur" in {
-        def repeat(n: Int, p: Parsley[Char]): Parsley[Char] = {
-            if (n > 0) p *> repeat(n-1, p)
-            else p
-        }
-        noException should be thrownBy repeat(4000, 'a').parse("a")
-    }*/
 }

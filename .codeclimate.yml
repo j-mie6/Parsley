@@ -17,9 +17,6 @@ exclude_patterns:
 - "**/ap.scala"
 - "**/lift.scala"
 - "**/generic.scala"
-- "**/genericbridges.scala"
-- "**/implicits/zipped.scala"
-- "**/implicits/lift.scala"
 - "**/syntax/zipped.scala"
 - "**/syntax/lift.scala"
 plugins:

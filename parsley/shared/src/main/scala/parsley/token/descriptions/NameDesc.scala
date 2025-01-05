@@ -5,7 +5,7 @@
  */
 package parsley.token.descriptions
 
-import parsley.token.predicate.{CharPredicate, NotRequired}
+import parsley.token.{CharPred, NotRequired}
 
 /** The class describes how name-like things are described lexically.
   *
@@ -15,10 +15,10 @@ import parsley.token.predicate.{CharPredicate, NotRequired}
   * @param operatorLetter what characters may continue a user-defined operator?
   * @since 4.0.0
   */
-final case class NameDesc (identifierStart: CharPredicate,
-                           identifierLetter: CharPredicate,
-                           operatorStart: CharPredicate,
-                           operatorLetter: CharPredicate)
+final case class NameDesc (identifierStart: CharPred,
+                           identifierLetter: CharPred,
+                           operatorStart: CharPred,
+                           operatorLetter: CharPred)
 
 /** This object contains any preconfigured name definitions.
   * @since 4.0.0

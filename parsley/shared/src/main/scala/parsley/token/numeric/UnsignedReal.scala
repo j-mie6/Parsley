@@ -12,10 +12,10 @@ import parsley.errors.combinator.{amendThenDislodge, entrench}
 import parsley.lift.lift2
 import parsley.state.Ref
 import parsley.syntax.character.charLift
-import parsley.token.descriptions.numeric.{BreakCharDesc, ExponentDesc, NumericDesc}
+import parsley.token.descriptions.{BreakCharDesc, ExponentDesc, NumericDesc}
 import parsley.token.errors.{ErrorConfig, LabelConfig}
 
-private [token] final class UnsignedReal(desc: NumericDesc, natural: UnsignedInteger, err: ErrorConfig, generic: Generic) extends Real(err) {
+private [token] final class UnsignedReal(desc: NumericDesc, err: ErrorConfig, generic: Generic) extends RealParsers(err) {
     override lazy val _decimal: Parsley[BigDecimal] = atomic(ofRadix(10, digit, err.labelRealDecimalEnd))
     override lazy val _hexadecimal: Parsley[BigDecimal] = atomic('0' *> noZeroHexadecimal)
     override lazy val _octal: Parsley[BigDecimal] = atomic('0' *> noZeroOctal)
@@ -104,12 +104,14 @@ private [token] final class UnsignedReal(desc: NumericDesc, natural: UnsignedInt
             }
         }
         val (requiredExponent, exponent, base) = expDesc match {
-            case ExponentDesc.Supported(compulsory, exp, base, sign) =>
+            case ExponentDesc.Supported(compulsory, exp, base, sign, leadingZeros) =>
                 val expErr = new ErrorConfig {
                     override def labelIntegerSignedDecimal(bits: Int) = err.labelRealExponentEnd.orElse(endLabel)
                     override def labelIntegerDecimalEnd = err.labelRealExponentEnd.orElse(endLabel)
                 }
-                val integer = new SignedInteger(desc.copy(positiveSign = sign), natural, expErr)
+                val expIntDesc = desc.copy(positiveSign = sign, leadingZerosAllowed = leadingZeros)
+                val natural = new UnsignedInteger(expIntDesc, expErr, generic)
+                val integer = new SignedInteger(expIntDesc, natural, expErr)
                 val exponent = err.labelRealExponent.orElse(endLabel)(oneOf(exp)) *> integer.decimal32
                 if (compulsory) (exponent, exponent, base)
                 else (exponent, exponent <|> pure(0), base)

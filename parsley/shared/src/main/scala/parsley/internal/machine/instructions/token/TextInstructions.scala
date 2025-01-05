@@ -8,7 +8,7 @@ package parsley.internal.machine.instructions.token
 import scala.annotation.tailrec
 
 import parsley.character.{isHexDigit, isOctDigit}
-import parsley.token.errors.SpecialisedFilterConfig
+import parsley.token.errors.SpecializedFilterConfig
 
 import parsley.internal.collection.immutable.Trie
 import parsley.internal.errors.{ExpectDesc, ExpectItem, ExpectRaw}
@@ -105,7 +105,7 @@ private [internal] final class EscapeAtMost(n: Int, radix: Int) extends EscapeSo
     // $COVERAGE-ON$
 }
 
-private [internal] final class EscapeOneOfExactly(radix: Int, ns: List[Int], inexactErr: SpecialisedFilterConfig[Int]) extends EscapeSomeNumber(radix) {
+private [internal] final class EscapeOneOfExactly(radix: Int, ns: List[Int], inexactErr: SpecializedFilterConfig[Int]) extends EscapeSomeNumber(radix) {
     private val (m :: ms) = ns: @unchecked
     def apply(ctx: Context): Unit = {
         val origOff = ctx.offset

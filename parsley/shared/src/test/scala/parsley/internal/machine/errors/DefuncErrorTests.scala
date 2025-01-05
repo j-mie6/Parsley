@@ -48,19 +48,19 @@ class DefuncErrorTests extends ParsleyTest {
         val errFlex2 = new UnexpectedError(0, 0, 0, Nil, new UnexpectDesc("oops", new FlexibleCaret(6)))
         val pRigid = errRigid.merge(err).asParseError
         pRigid shouldBe a [TrivialError]
-        pRigid.asInstanceOf[TrivialError].unexpected.fold(identity, _.formatUnexpect(false)._2.toCaretLength(0, 10, Nil)) shouldBe 1
+        pRigid.asInstanceOf[TrivialError].unexpected.fold(identity, _.formatUnexpect(false)._2) shouldBe 1
         val pFlex1 = errFlex1.merge(err).asParseError
         pFlex1 shouldBe a [TrivialError]
-        pFlex1.asInstanceOf[TrivialError].unexpected.fold(identity, _.formatUnexpect(false)._2.toCaretLength(0, 10, Nil)) shouldBe 5
+        pFlex1.asInstanceOf[TrivialError].unexpected.fold(identity, _.formatUnexpect(false)._2) shouldBe 5
         val pFlex2 = errFlex2.merge(err).asParseError
         pFlex2 shouldBe a [TrivialError]
-        pFlex2.asInstanceOf[TrivialError].unexpected.fold(identity, _.formatUnexpect(false)._2.toCaretLength(0, 10, Nil)) shouldBe 6
+        pFlex2.asInstanceOf[TrivialError].unexpected.fold(identity, _.formatUnexpect(false)._2) shouldBe 6
         val pFlex3 = errFlex1.merge(errFlex2).asParseError
         pFlex3 shouldBe a [TrivialError]
-        pFlex3.asInstanceOf[TrivialError].unexpected.fold(identity, _.formatUnexpect(false)._2.toCaretLength(0, 10, Nil)) shouldBe 6
+        pFlex3.asInstanceOf[TrivialError].unexpected.fold(identity, _.formatUnexpect(false)._2) shouldBe 6
         val pFlex4 = errRigid.merge(errFlex1).asParseError
         pFlex4 shouldBe a [TrivialError]
-        pFlex4.asInstanceOf[TrivialError].unexpected.fold(identity, _.formatUnexpect(false)._2.toCaretLength(0, 10, Nil)) shouldBe 1
+        pFlex4.asInstanceOf[TrivialError].unexpected.fold(identity, _.formatUnexpect(false)._2) shouldBe 1
     }
 
     "ClassicFancyError" should "evaluate to FancyError" in {

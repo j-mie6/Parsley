@@ -24,12 +24,12 @@ operators. As an example:
 
 > <h3>`p op p op p op p op p`</h3>
 
-The above can be parsed using `chain.left1(p, op)` to have the
+The above can be parsed using `chain.left1(p)(op)` to have the
 effect of parsing like:
 
 > <h3>`(((p op p) op p) op p) op p`</h3>
 
-It can also be parded using `chain.right1(p, op)` to have the
+It can also be parsed using `chain.right1(p)(op)` to have the
 effect of parsing like:
 
 > <h3>`p op (p op (p op (p op p)))`</h3>
@@ -56,7 +56,7 @@ Given input of shape:
 
 > <h3>`p op op op op`</h3>
 
-The combinator `postfix p op` will parse the input and apply
+The combinator `postfix(p)(op)` will parse the input and apply
 results such that it would look like:
 
 > <h3>`(((p op) op) op) op`</h3>
@@ -65,7 +65,7 @@ Similarly, given input of shape:
 
 > <h3>`op op op op p`</h3>
 
-The combinator `prefix op p` will parse the input and apply
+The combinator `prefix(p)(op)` will parse the input and apply
 results such that it would look like:
 
 > <h3>`op (op (op (op p)))`</h3>
@@ -84,7 +84,7 @@ or not. This is enforced by the type signature of the operations
 themselves:
 
 ```scala
-def prefix1[A, B <: A](op: Parsley[A => B], p: Parsley[A]): Parsley[B]
+def prefix1[A, B <: A](p: Parsley[A])(op: Parsley[A => B]): Parsley[B]
 ```
 
 Given that `B` is a subtype of `A`, it is not possible for the

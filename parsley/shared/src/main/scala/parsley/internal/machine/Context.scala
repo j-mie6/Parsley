@@ -15,7 +15,8 @@ import parsley.XAssert._
 import parsley.errors.ErrorBuilder
 
 import parsley.internal.errors.{CaretWidth, ExpectItem, LineBuilder, UnexpectDesc}
-import parsley.internal.machine.errors.{ClassicFancyError, DefuncError, DefuncHints, EmptyHints, ErrorItemBuilder, ExpectedError, UnexpectedError}
+import parsley.internal.machine.errors.{ClassicFancyError, DefuncError, DefuncHints, EmptyHints,
+                                        ErrorItemBuilder, ExpectedError, ExpectedErrorWithReason, UnexpectedError}
 
 import instructions.Instr
 import stacks.{ArrayStack, CallStack, ErrorStack, HandlerStack, Stack, StateStack}, Stack.StackExt
@@ -123,11 +124,12 @@ private [parsley] final class Context(private [machine] var instrs: Array[Instr]
     }
     // $COVERAGE-ON$
 
-    @tailrec private [parsley] def run[Err: ErrorBuilder, A](): Result[Err, A] = {
+    private [parsley] def run[Err: ErrorBuilder, A](): Result[Err, A] = go[Err, A]()
+    @tailrec private def go[Err: ErrorBuilder, A](): Result[Err, A] = {
         //println(pretty)
         if (running) { // this is the likeliest branch, so should be executed with fewest comparisons
             instrs(pc)(this)
-            run[Err, A]()
+            go[Err, A]()
         }
         else if (good) {
             assert(stack.size == 1, s"stack must end a parse with exactly one item, it has ${stack.size}")
@@ -192,6 +194,13 @@ private [parsley] final class Context(private [machine] var instrs: Array[Instr]
     }
     private [machine] def expectedFail(expected: Iterable[ExpectItem], unexpectedWidth: Int): Unit = {
         this.fail(new ExpectedError(offset, line, col, expected, unexpectedWidth))
+    }
+    private [machine] def expectedFailWithReason(expected: Iterable[ExpectItem], reason: String, unexpectedWidth: Int): Unit = {
+        this.fail(new ExpectedErrorWithReason(offset, line, col, expected, reason, unexpectedWidth))
+    }
+    private [machine] def expectedFailWithReason(expected: Iterable[ExpectItem], reason: Option[String], unexpectedWidth: Int): Unit = {
+        if (reason.isEmpty) this.expectedFail(expected, unexpectedWidth)
+        else this.expectedFailWithReason(expected, reason.get, unexpectedWidth)
     }
 
     private [machine] def fail(error: DefuncError): Unit = {

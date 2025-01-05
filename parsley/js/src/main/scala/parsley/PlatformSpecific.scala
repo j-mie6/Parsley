@@ -6,4 +6,4 @@
 package parsley
 
 // nothing to see here, JS does not support file IO
-class PlatformSpecific
+trait PlatformSpecific

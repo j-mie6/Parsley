@@ -7,14 +7,15 @@ package parsley.token.text
 
 import parsley.Parsley
 import parsley.character.char
-import parsley.token.descriptions.text.TextDesc
+import parsley.token.descriptions.TextDesc
 import parsley.token.errors.{ErrorConfig, FilterConfig, LabelConfig, LabelWithExplainConfig}
 
-private [token] final class ConcreteCharacter(desc: TextDesc, escapes: Escape, err: ErrorConfig) extends Character {
+private [token] final class ConcreteCharacter(desc: TextDesc, escapes: Escape, err: ErrorConfig) extends CharacterParsers {
     private val quote = char(desc.characterLiteralEnd)
-    private lazy val graphic = Character.letter(desc.characterLiteralEnd, desc.escapeSequences.escBegin, allowsAllSpace = false, desc.graphicCharacter)
+    private lazy val graphic = CharacterParsers.letter(desc.characterLiteralEnd, allowsAllSpace = false, desc.graphicCharacter)
 
     private def charLetter(graphicLetter: Parsley[Int]) = {
+        // escapeChar is not atomic, so we don't need to rule out escape begin in graphic
         escapes.escapeChar <|> err.labelGraphicCharacter(graphicLetter) <|> err.verifiedCharBadCharsUsedInLiteral.checkBadChar
     }
     private def charLiteral[A](letter: Parsley[A], end: LabelConfig) = quote *> letter <* end(quote)
@@ -31,7 +32,7 @@ private [token] final class ConcreteCharacter(desc: TextDesc, escapes: Escape, e
         constrainedBmp(!Character.isBmpCodePoint(_), err.labelCharBasicMultilingualPlane, err.labelCharBasicMultilingualPlaneEnd,
                        err.filterCharNonBasicMultilingualPlane)
     override lazy val ascii: Parsley[Char] =
-        constrainedBmp(_ > Character.MaxAscii, err.labelCharAscii, err.labelCharAsciiEnd, err.filterCharNonAscii)
+        constrainedBmp(_ > CharacterParsers.MaxAscii, err.labelCharAscii, err.labelCharAsciiEnd, err.filterCharNonAscii)
     override lazy val latin1: Parsley[Char] =
-        constrainedBmp(_ > Character.MaxLatin1, err.labelCharLatin1, err.labelCharLatin1End, err.filterCharNonLatin1)
+        constrainedBmp(_ > CharacterParsers.MaxLatin1, err.labelCharLatin1, err.labelCharLatin1End, err.filterCharNonLatin1)
 }

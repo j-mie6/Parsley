@@ -80,10 +80,8 @@ with the Haskell specification!
 import parsley.Parsley
 
 object lexer {
-    import parsley.token.Lexer
-    import parsley.token.descriptions.{LexicalDesc, NameDesc, SymbolDesc, SpaceDesc,
-                                       numeric, text}
-    import parsley.token.predicate.{Unicode, Basic}
+    import parsley.token.{Lexer, Unicode, Basic}
+    import parsley.token.descriptions.{LexicalDesc, NameDesc, SymbolDesc, SpaceDesc, NumericDesc, ExponentDesc, EscapeDesc, TextDesc}
     import parsley.character.newline
     private val haskellDesc = LexicalDesc(
         NameDesc.plain.copy(
@@ -97,18 +95,18 @@ object lexer {
             hardOperators = Set("$", "||", "&&", "<", "<=", ">", ">=", "==", "/=", ":",
                                 "++", "+", "-", "*", "/", "^", "."),
         ),
-        numeric.NumericDesc.plain.copy(
-            octalExponentDesc = numeric.ExponentDesc.NoExponents,
-            binaryExponentDesc = numeric.ExponentDesc.NoExponents,
+        NumericDesc.plain.copy(
+            octalExponentDesc = ExponentDesc.NoExponents,
+            binaryExponentDesc = ExponentDesc.NoExponents,
         ),
-        text.TextDesc.plain.copy(
-            escapeSequences = text.EscapeDesc.haskell,
+        TextDesc.plain.copy(
+            escapeSequences = EscapeDesc.haskell,
         ),
         SpaceDesc.plain.copy(
-            commentStart = "{-",
-            commentEnd = "-}",
-            commentLine = "--",
-            nestedComments = true,
+            lineCommentStart = "--",
+            multiLineCommentStart = "{-",
+            multiLineCommentEnd = "-}",
+            multiLineNestedComments = true,
             space = Basic(c => c == ' ' || c == '\t'),
         )
     )
@@ -413,7 +411,7 @@ Here we can see a whole bunch of interesting things! Firstly, up to this point w
 seeing `Ops` in our precedence, where here we are using `SOps` and the `Levels` list. This is
 important, because our AST is far more strongly typed. If we made each layer of the tree the same
 `(Expr, Expr) => Expr` shape, then we could use `Ops` as we've been used to in other pages.
-However, sine I opted to make a more strongly typed tree using subtyping, we have to use the more
+However, since I opted to make a more strongly typed tree using subtyping, we have to use the more
 complex and general `SOps` precedence architecture. This has some really nice consequences:
 
 1) if, say, I removed `SOps(InfixR)(Exp <# "^")` from the list, it would no longer compile
@@ -475,7 +473,7 @@ lazy val `<pat-naked>`: Parsley[PatNaked] =
     | PatTuple("(" ~> sepBy1(`<pat>`, ",") <~ ")")
     | PatList("[" ~> sepBy(`<pat>`, ",") <~ "]")
     )
-lazy val `<pat>` = infix.right1(`<pat-paren>`, PatCons from ":")
+lazy val `<pat>` = infix.right1(`<pat-paren>`)(PatCons from ":")
 lazy val `<pat-paren>` = atomic(`<pat-app>`) | `<pat-naked>`
 lazy val `<pat-app>` = PatApp(`<pat-con>`, some(`<pat-naked>`))
 lazy val `<pat-con>` = ( atomic("(" ~> (ConsCon from ":") <~ ")")
@@ -503,7 +501,7 @@ cases: there isn't much more to say until we try and deal with much more complex
 features.
 
 ```scala mdoc
-lazy val `<type>`: Parsley[Type] = infix.right1(`<type-app>`, FunTy from "->")
+lazy val `<type>`: Parsley[Type] = infix.right1(`<type-app>`)(FunTy from "->")
 lazy val `<type-app>` = `<type-atom>`.reduceLeft(TyApp)
 lazy val `<type-atom>` = ( `<type-con>` | `<var-id>` | (UnitTy from "()")
                          | ListTy("[" ~> `<type>` <~ "]")
@@ -1149,7 +1147,7 @@ Now, to make this work nicely, I'm going to make use of the `<+>` combinator: pr
 this, we can define the factored `<program>`:
 
 ```scala mdoc:nest:silent
-import parsley.syntax.zipped.Zipped3
+import parsley.syntax.zipped._
 
 val `<declaration>` = "::" ~> `<type>`
 

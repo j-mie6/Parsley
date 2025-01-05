@@ -357,7 +357,7 @@ to this is fairly simple, but I want to illustrate how we can make steps towards
 problem ourselves using the combinators found in `parsley.debug`:
 
 ```scala mdoc:invisible
-parsley.debug.disableColourRendering()
+parsley.debug.disableColorRendering()
 ```
 ```scala mdoc:nest:silent
 import parsley.Parsley
@@ -651,7 +651,7 @@ Before we move on with a more fleshed out example, I want to annotate the `match
 
 ```scala mdoc:invisible
 import parsley.debug._
-parsley.debug.disableColourRendering()
+parsley.debug.disableColorRendering()
 lazy val matchingDebug: Parsley[Unit] = many('('.debug("left") ~> matchingDebug <~ ')'.debug("right")).void.debug("matching")
 val onlyMatchingDebug = matchingDebug <~ eof
 ```
@@ -700,8 +700,8 @@ less efficient) and will give a sense of how the solution works out.
 ```scala mdoc:silent
 import parsley.Parsley, Parsley.atomic
 import parsley.syntax.character.stringLift
-import parsley.syntax.lift.Lift2
-import parsley.syntax.zipped.Zipped2
+import parsley.syntax.lift.liftSyntax2
+import parsley.syntax.zipped._
 
 val or = (x: Boolean, y: Boolean) => x || y
 
@@ -747,7 +747,7 @@ said, is to implement the second grammar. This is, as we'll see, a little tricke
 ```scala mdoc:silent:reset
 import parsley.Parsley
 import parsley.syntax.character.stringLift
-import parsley.syntax.lift.Lift2
+import parsley.syntax.lift.liftSyntax2
 import parsley.combinator.option
 
 val and = (y: Boolean) => (x: Boolean) => x && y

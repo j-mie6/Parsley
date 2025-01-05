@@ -29,3 +29,10 @@ package object text
   * @since 4.0.0
   */
 package object symbol
+
+/** This module contains functionality to describe character predicates, which can
+  * be used to determine what characters are valid for different tokens.
+  *
+  * @since 4.0.0
+  */
+package object predicate

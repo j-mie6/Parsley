@@ -8,7 +8,7 @@ package parsley.expr
 import parsley.Parsley, Parsley.notFollowedBy
 import parsley.XAnnotation.{implicitNotFound212, implicitNotFound213}
 import parsley.errors.combinator.ErrorMethods
-import parsley.syntax.zipped.Zipped2
+import parsley.syntax.zipped.zippedSyntax2
 
 import parsley.internal.deepembedding.frontend
 
@@ -38,7 +38,7 @@ object infix {
       * scala> sealed trait Expr
       * scala> case class Add(x: Num, y: Expr) extends Expr
       * scala> case class Num(x: Int) extends Expr
-      * scala> val expr = infix.right1[Num, Add, Expr](digit.map(d => Num(d.asDigit)), char('+').as(Add)))
+      * scala> val expr = infix.right1[Num, Add, Expr](digit.map(d => Num(d.asDigit)))(char('+').as(Add)))
       * scala> expr.parse("1+2+3+4")
       * val res0 = Success(Add(Num(1), Add(Num(2), Add(Num(3), Num(4)))))
       * scala> expr.parse("")
@@ -55,7 +55,7 @@ object infix {
       * @see [[chain.right1 `chain.right1`]] for a version where the types must match, allowing for flexibility to change the associativity.
       * @since 4.0.0
       */
-    def right1[A, B, C >: B](p: Parsley[A], op: =>Parsley[(A, C) => B])
+    def right1[A, B, C >: B](p: Parsley[A])(op: =>Parsley[(A, C) => B])
             (implicit @implicitNotFound213("Please provide a wrapper function from ${A} to ${C}")
                       @implicitNotFound212("Please provide a wrapper function from A to C") wrap: A => C): Parsley[C] = {
         new Parsley(new frontend.Chainr(p.internal, op.internal, wrap))
@@ -76,7 +76,7 @@ object infix {
       * scala> sealed trait Expr
       * scala> case class Add(x: Expr, y: Num) extends Expr
       * scala> case class Num(x: Int) extends Expr
-      * scala> val expr = infix.left1[Num, Add, Expr](digit.map(d => Num(d.asDigit)), char('+').as(Add))
+      * scala> val expr = infix.left1[Num, Add, Expr](digit.map(d => Num(d.asDigit)))(char('+').as(Add))
       * scala> expr.parse("1+2+3+4")
       * val res0 = Success(Add(Add(Add(Num(1), Num(2)), Num(3)), Num(4)))
       * scala> expr.parse("")
@@ -93,15 +93,15 @@ object infix {
       * @see [[chain.left1 `chain.left1`]] for a version where the types must match, allowing for flexibility to change the associativity.
       * @since 4.0.0
       */
-    def left1[A, B, C >: B](p: Parsley[A], op: =>Parsley[(C, A) => B])
+    def left1[A, B, C >: B](p: Parsley[A])(op: =>Parsley[(C, A) => B])
             (implicit @implicitNotFound213("Please provide a wrapper function from ${A} to ${C}")
                       @implicitNotFound212("Please provide a wrapper function from A to C") wrap: A => C): Parsley[C] = {
         // a sneaky sneaky trick :) If we know that A =:= B because refl was provided, then we can skip the wrapping
-        secretLeft1(parsley.XCompat.applyWrap(wrap)(p), p, op)
+        secretLeft1(parsley.XCompat.applyWrap(wrap)(p), p, op, "infix.left1")
     }
 
-    private [parsley] def secretLeft1[A, B, C >: B](p0: Parsley[C], p: =>Parsley[A], op: =>Parsley[(C, A) => B]): Parsley[C] = {
-        new Parsley(new frontend.Chainl(p0.internal, p.internal, op.internal))
+    private [parsley] def secretLeft1[A, B, C >: B](p0: Parsley[C], p: =>Parsley[A], op: =>Parsley[(C, A) => B], name: String): Parsley[C] = {
+        new Parsley(new frontend.Chainl(p0.internal, p.internal, op.internal, name))
     }
 
     /** This combinator handles right-associative parsing, and application of, '''zero''' or more binary operators between '''zero''' or more values.
@@ -120,7 +120,7 @@ object infix {
       * scala> sealed trait Expr
       * scala> case class Add(x: Num, y: Expr) extends Expr
       * scala> case class Num(x: Int) extends Expr
-      * scala> val expr = infix.right[Num, Add, Expr](digit.map(d => Num(d.asDigit)), char('+').as(Add), Num(0))
+      * scala> val expr = infix.right[Num, Add, Expr](digit.map(d => Num(d.asDigit)))(char('+').as(Add), Num(0))
       * scala> expr.parse("1+2+3+4")
       * val res0 = Success(Add(Num(1), Add(Num(2), Add(Num(3), Num(4)))))
       * scala> expr.parse("")
@@ -139,9 +139,9 @@ object infix {
       * @see [[chain.right `chain.right`]] for a version where the types must match, allowing for flexibility to change the associativity.
       * @since 4.0.0
       */
-    def right[A, B, C >: B](p: Parsley[A], op: =>Parsley[(A, C) => B], x: C)
+    def right[A, B, C >: B](p: Parsley[A])(op: =>Parsley[(A, C) => B], x: C)
             (implicit @implicitNotFound213("Please provide a wrapper function from ${A} to ${C}")
-                      @implicitNotFound212("Please provide a wrapper function from A to C") wrap: A => C): Parsley[C] = right1(p, op) </> x
+                      @implicitNotFound212("Please provide a wrapper function from A to C") wrap: A => C): Parsley[C] = right1(p)(op) </> x
 
     /** This combinator handles left-associative parsing, and application of, '''zero''' or more binary operators between '''zero''' or more values.
       *
@@ -159,7 +159,7 @@ object infix {
       * scala> sealed trait Expr
       * scala> case class Add(x: Expr, y: Num) extends Expr
       * scala> case class Num(x: Int) extends Expr
-      * scala> val expr = infix.left[Num, Add, Expr](digit.map(d => Num(d.asDigit)), char('+').as(Add), Num(0))
+      * scala> val expr = infix.left[Num, Add, Expr](digit.map(d => Num(d.asDigit)))(char('+').as(Add), Num(0))
       * scala> expr.parse("1+2+3+4")
       * val res0 = Success(Add(Add(Add(Num(1), Num(2)), Num(3)), Num(4)))
       * scala> expr.parse("")
@@ -178,17 +178,19 @@ object infix {
       * @see [[chain.left `chain.left`]] for a version where the types must match, allowing for flexibility to change the associativity.
       * @since 4.0.0
       */
-    def left[A, B, C >: B](p: Parsley[A], op: =>Parsley[(C, A) => B], x: C)
+    def left[A, B, C >: B](p: Parsley[A])(op: =>Parsley[(C, A) => B], x: C)
             (implicit @implicitNotFound213("Please provide a wrapper function from ${A} to ${C}")
-                      @implicitNotFound212("Please provide a wrapper function from A to C") wrap: A => C): Parsley[C] = left1(p, op) </> x
+                      @implicitNotFound212("Please provide a wrapper function from A to C") wrap: A => C): Parsley[C] = left1(p)(op) </> x
 
-    // Private Helpers (maybe expose these in future?)
-    private [expr] def prefix[A, B](op: Parsley[B => B], p: Parsley[A])(implicit wrap: A => B): Parsley[B] =
-        chain.prefix(op, parsley.XCompat.applyWrap(wrap)(p))
-    private [expr] def postfix[A, B](p: Parsley[A], op: Parsley[B => B])(implicit wrap: A => B): Parsley[B] =
-        chain.postfix(parsley.XCompat.applyWrap(wrap)(p), op)
-    private [expr] def nonassoc[A, B](p: Parsley[A], op: Parsley[(A, A) => B])(implicit wrap: A => B): Parsley[B] = {
+    //TODO: document
+    def nonassoc[A, B](p: Parsley[A])(op: Parsley[(A, A) => B])(implicit wrap: A => B): Parsley[B] = {
         val guardNonAssoc = notFollowedBy(op).explain("non-associative operators cannot be chained together")
         p <**> ((op, p).zipped((f, y) => f(_, y)) </> wrap) <* guardNonAssoc
     }
+
+    // Private Helpers (maybe expose these in future?)
+    private [expr] def prefix[A, B](p: Parsley[A])(op: Parsley[B => B])(implicit wrap: A => B): Parsley[B] =
+        chain.prefix(parsley.XCompat.applyWrap(wrap)(p))(op)
+    private [expr] def postfix[A, B](p: Parsley[A])(op: Parsley[B => B])(implicit wrap: A => B): Parsley[B] =
+        chain.postfix(parsley.XCompat.applyWrap(wrap)(p))(op)
 }

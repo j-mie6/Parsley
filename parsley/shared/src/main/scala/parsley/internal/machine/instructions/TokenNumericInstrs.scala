@@ -5,7 +5,7 @@
  */
 package parsley.internal.machine.instructions
 
-import parsley.token.descriptions.numeric.PlusSignPresence
+import parsley.token.descriptions.PlusSignPresence
 
 import parsley.internal.deepembedding.Sign.{CombinedType, DoubleType, IntType, SignType}
 import parsley.internal.errors.{ExpectItem, ExpectRaw}

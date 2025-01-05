@@ -156,6 +156,7 @@ private [errors] sealed abstract class TrivialDefuncError extends DefuncError {
         case self: BaseError           =>
             collector ++= self.expected
             collector.updateWidth(self.unexpectedWidth)
+        // FIXME: Why doesn't this traverse deeper to collect the width?
         case self: WithLabel           => collector ++= self.labels.map(new ExpectDesc(_))
         case self: WithHints           =>
             self.hints.collect(collector)

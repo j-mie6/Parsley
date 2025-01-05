@@ -14,14 +14,14 @@ import parsley.internal.machine.instructions
 // This doesn't need to be a CaretWidth, because empty generates errors that are the least dominating kind anyway
 private [parsley] final class Empty private (val width: Int) extends Singleton[Nothing] with MZero {
     // $COVERAGE-OFF$
-    override val pretty: String = "empty"
+    override def pretty: String = debugName
     // $COVERAGE-ON$
     override def genInstrs(producesResults: Boolean)(implicit instrs: InstrBuffer): Unit = instrs += new instructions.Empty(width)
 
     // $COVERAGE-OFF$
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[Nothing] = visitor.visit(this, context)(width)
 
-    override private[parsley] def prettyName = pretty
+    private [parsley] var debugName = "empty"
     // $COVERAGE-ON$
 }
 
@@ -34,7 +34,7 @@ private [parsley] final class Fail(width: CaretWidth, msgs: String*) extends Sin
     // $COVERAGE-OFF$
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[Nothing] = visitor.visit(this, context)(width, msgs)
 
-    override private[parsley] def prettyName = "fail"
+    private [parsley] var debugName = "fail"
     // $COVERAGE-ON$
 }
 
@@ -47,7 +47,7 @@ private [parsley] final class Unexpected(msg: String, width: CaretWidth) extends
     // $COVERAGE-OFF$
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[Nothing] = visitor.visit(this, context)(msg, width)
 
-    override private[parsley] def prettyName = "unexpected"
+    private [parsley] var debugName = "unexpected"
     // $COVERAGE-ON$
 }
 
@@ -62,21 +62,21 @@ private [parsley] final class VanillaGen[A](gen: parsley.errors.VanillaGen[A]) e
     // $COVERAGE-OFF$
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[((A, Int)) => Nothing] = visitor.visit(this, context)(gen)
 
-    override private[parsley] def prettyName: String = pretty
+    private [parsley] var debugName: String = pretty
     // $COVERAGE-ON$
 }
 
-private [parsley] final class SpecialisedGen[A](gen: parsley.errors.SpecialisedGen[A]) extends Singleton[((A, Int)) => Nothing] {
+private [parsley] final class SpecializedGen[A](gen: parsley.errors.SpecializedGen[A]) extends Singleton[((A, Int)) => Nothing] {
     // $COVERAGE-OFF$
-    override def pretty: String = "SpecialisedGen"
+    override def pretty: String = "SpecializedGen"
     // $COVERAGE-ON$
 
-    override def genInstrs(producesResults: Boolean)(implicit instrs: InstrBuffer): Unit = instrs += new instructions.SpecialisedGen(gen)
+    override def genInstrs(producesResults: Boolean)(implicit instrs: InstrBuffer): Unit = instrs += new instructions.SpecializedGen(gen)
 
     // $COVERAGE-OFF$
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[((A, Int)) => Nothing] = visitor.visit(this, context)(gen)
 
-    override private[parsley] def prettyName: String = pretty
+    private [parsley] var debugName: String = pretty
     // $COVERAGE-ON$
 }
 

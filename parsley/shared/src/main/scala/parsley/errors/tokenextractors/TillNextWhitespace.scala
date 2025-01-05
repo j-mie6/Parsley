@@ -7,7 +7,7 @@ package parsley.errors.tokenextractors
 
 import scala.collection.immutable.WrappedString
 
-import parsley.errors.{helpers, ErrorBuilder, Token, TokenSpan}
+import parsley.errors.{helpers, ErrorBuilder, Token}
 
 import org.typelevel.scalaccompat.annotation.unused
 
@@ -62,7 +62,7 @@ object TillNextWhitespace {
       * @since 4.4.0
       */
     def unexpectedToken(cs: Iterable[Char], isWhitespace: Char => Boolean): Token = cs match {
-        case helpers.WhitespaceOrUnprintable(name) => Token.Named(name, TokenSpan.Width(1))
+        case helpers.WhitespaceOrUnprintable(name) => Token.Named(name, 1)
         // these cases automatically handle the utf-16 surrogate pairs
         case cs => Token.Raw(extractTillNextWhitespace(cs, isWhitespace))
     }
@@ -82,7 +82,7 @@ object TillNextWhitespace {
       * @since 4.4.0
       */
     def unexpectedToken(cs: Iterable[Char], amountOfInputParserWanted: Int, isWhitespace: Char => Boolean): Token = cs match {
-        case helpers.WhitespaceOrUnprintable(name) => Token.Named(name, TokenSpan.Width(1))
+        case helpers.WhitespaceOrUnprintable(name) => Token.Named(name, 1)
         // these cases automatically handle the utf-16 surrogate pairs
         case cs => Token.Raw(helpers.takeCodePoints(extractTillNextWhitespace(cs, isWhitespace), amountOfInputParserWanted))
     }

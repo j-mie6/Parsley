@@ -5,13 +5,15 @@
  */
 package parsley.internal.deepembedding.frontend
 
+import scala.collection.Factory
+
 import parsley.debug.{Breakpoint, Profiler}
 import parsley.errors.ErrorBuilder
 import parsley.state.Ref
 import parsley.token.descriptions.SpaceDesc
-import parsley.token.descriptions.numeric.PlusSignPresence
-import parsley.token.errors.{ErrorConfig, LabelConfig, SpecialisedFilterConfig}
-import parsley.token.predicate.CharPredicate
+import parsley.token.descriptions.PlusSignPresence
+import parsley.token.errors.{ErrorConfig, LabelConfig, LabelWithExplainConfig, SpecializedFilterConfig}
+import parsley.token.CharPred
 
 // scalastyle:off underscore.import
 import parsley.internal.collection.immutable.Trie
@@ -65,19 +67,23 @@ private [parsley] abstract class LazyParsleyIVisitor[-T, +U[+_]] { // scalastyle
     def visit(self: Fail, context: T)(width: CaretWidth, msgs: Seq[String]): U[Nothing]
     def visit(self: Unexpected, context: T)(msg: String, width: CaretWidth): U[Nothing]
     def visit[A](self: VanillaGen[A], context: T)(gen: parsley.errors.VanillaGen[A]): U[((A, Int)) => Nothing]
-    def visit[A](self: SpecialisedGen[A], context: T)(gen: parsley.errors.SpecialisedGen[A]): U[((A, Int)) => Nothing]
+    def visit[A](self: SpecializedGen[A], context: T)(gen: parsley.errors.SpecializedGen[A]): U[((A, Int)) => Nothing]
     def visit(self: EscapeMapped, context: T)(escTrie: Trie[Int], escs: Set[String]): U[Int]
     def visit(self: EscapeAtMost, context: T)(n: Int, radix: Int): U[BigInt]
-    def visit(self: EscapeOneOfExactly, context: T)(radix: Int, ns: List[Int], ie: SpecialisedFilterConfig[Int]): U[BigInt]
+    def visit(self: EscapeOneOfExactly, context: T)(radix: Int, ns: List[Int], ie: SpecializedFilterConfig[Int]): U[BigInt]
     def visit(self: SoftKeyword, context: T)(specific: String,
-                                             letter: CharPredicate,
+                                             letter: CharPred,
                                              caseSensitive: Boolean,
-                                             expected: LabelConfig,
+                                             expected: LabelWithExplainConfig,
                                              expectedEnd: String): U[Unit]
-    def visit(self: SoftOperator, context: T)(specific: String, letter: CharPredicate, ops: Trie[Unit], expected: LabelConfig, expectedEnd: String): U[Unit]
+    def visit(self: SoftOperator, context: T)(specific: String,
+                                              letter: CharPred,
+                                              ops: Trie[Unit],
+                                              expected: LabelWithExplainConfig,
+                                              expectedEnd: String): U[Unit]
 
     // Primitive parser visitors.
-    def visit[A](self: Attempt[A], context: T)(p: LazyParsley[A]): U[A]
+    def visit[A](self: Atomic[A], context: T)(p: LazyParsley[A]): U[A]
     def visit[A](self: Look[A], context: T)(p: LazyParsley[A]): U[A]
     def visit[A](self: NotFollowedBy[A], context: T)(p: LazyParsley[A]): U[Unit]
     def visit[S](self: Put[S], context: T)(ref: Ref[S], p: LazyParsley[S]): U[Unit]
@@ -108,17 +114,17 @@ private [parsley] abstract class LazyParsleyIVisitor[-T, +U[+_]] { // scalastyle
     def visit[A](self: <*[A], context: T)(p: LazyParsley[A], _q: =>LazyParsley[_]): U[A]
 
     // Iterative parser visitors.
-    def visit[A](self: Many[A], context: T)(p: LazyParsley[A]): U[List[A]]
+    def visit[A, C](self: Many[A, C], context: T)(p: LazyParsley[A], factory: Factory[A, C]): U[C]
     def visit[A](self: ChainPost[A], context: T)(p: LazyParsley[A], _op: =>LazyParsley[A => A]): U[A]
     def visit[A](self: ChainPre[A], context: T)(p: LazyParsley[A], op: =>LazyParsley[A => A]): U[A]
     def visit[A, B](self: Chainl[A, B], context: T)(init: LazyParsley[B], p: =>LazyParsley[A], op: =>LazyParsley[(B, A) => B]): U[B]
     def visit[A, B](self: Chainr[A, B], context: T)(p: LazyParsley[A], op: =>LazyParsley[(A, B) => B], wrap: A => B): U[B]
-    def visit[A, B](self: SepEndBy1[A, B], context: T)(p: LazyParsley[A], sep: =>LazyParsley[B]): U[List[A]]
-    def visit[A](self: ManyUntil[A], context: T)(body: LazyParsley[Any]): U[List[A]]
+    def visit[A, C](self: SepEndBy1[A, C], context: T)(p: LazyParsley[A], sep: =>LazyParsley[_], factory: Factory[A, C]): U[C]
+    def visit[A, C](self: ManyUntil[A, C], context: T)(body: LazyParsley[Any], factory: Factory[A, C]): U[C]
     def visit(self: SkipManyUntil, context: T)(body: LazyParsley[Any]): U[Unit]
 
     // Error parser visitors.
-    def visit[A](self: ErrorLabel[A], context: T)(p: LazyParsley[A], labels: Seq[String]): U[A]
+    def visit[A](self: ErrorLabel[A], context: T)(p: LazyParsley[A], label: String, labels: Seq[String]): U[A]
     def visit[A](self: ErrorHide[A], context: T)(p: LazyParsley[A]): U[A]
     def visit[A](self: ErrorExplain[A], context: T)(p: LazyParsley[A], reason: String): U[A]
     def visit[A](self: ErrorAmend[A], context: T)(p: LazyParsley[A], partial: Boolean): U[A]
@@ -200,27 +206,27 @@ private [frontend] abstract class GenericLazyParsleyIVisitor[-T, +U[+_]] extends
     override def visit(self: Fail, context: T)(width: CaretWidth, msgs: Seq[String]): U[Nothing] = visitSingleton(self, context)
     override def visit(self: Unexpected, context: T)(msg: String, width: CaretWidth): U[Nothing] = visitSingleton(self, context)
     override def visit[A](self: VanillaGen[A], context: T)(gen: parsley.errors.VanillaGen[A]): U[((A, Int)) => Nothing] = visitSingleton(self, context)
-    override def visit[A](self: SpecialisedGen[A], context: T)(gen: parsley.errors.SpecialisedGen[A]): U[((A, Int)) => Nothing] = {
+    override def visit[A](self: SpecializedGen[A], context: T)(gen: parsley.errors.SpecializedGen[A]): U[((A, Int)) => Nothing] = {
         visitSingleton(self, context)
     }
     override def visit(self: EscapeMapped, context: T)(escTrie: Trie[Int], escs: Set[String]): U[Int] = visitSingleton(self, context)
     override def visit(self: EscapeAtMost, context: T)(n: Int, radix: Int): U[BigInt] = visitSingleton(self, context)
-    override def visit(self: EscapeOneOfExactly, context: T)(radix: Int, ns: List[Int], ie: SpecialisedFilterConfig[Int]): U[BigInt] = {
+    override def visit(self: EscapeOneOfExactly, context: T)(radix: Int, ns: List[Int], ie: SpecializedFilterConfig[Int]): U[BigInt] = {
         visitSingleton(self, context)
     }
     override def visit(self: SoftKeyword, context: T)(specific: String,
-                                                      letter: CharPredicate,
+                                                      letter: CharPred,
                                                       caseSensitive: Boolean,
-                                                      expected: LabelConfig,
+                                                      expected: LabelWithExplainConfig,
                                                       expectedEnd: String): U[Unit] = visitSingleton(self, context)
     override def visit(self: SoftOperator, context: T)(specific: String,
-                                                       letter: CharPredicate,
+                                                       letter: CharPred,
                                                        ops: Trie[Unit],
-                                                       expected: LabelConfig,
+                                                       expected: LabelWithExplainConfig,
                                                        expectedEnd: String): U[Unit] = visitSingleton(self, context)
 
     // Primitive overrides.
-    override def visit[A](self: Attempt[A], context: T)(p: LazyParsley[A]): U[A] = visitUnary(self, context)(p)
+    override def visit[A](self: Atomic[A], context: T)(p: LazyParsley[A]): U[A] = visitUnary(self, context)(p)
     override def visit[A](self: Look[A], context: T)(p: LazyParsley[A]): U[A] = visitUnary(self, context)(p)
     override def visit[A](self: NotFollowedBy[A], context: T)(p: LazyParsley[A]): U[Unit] = visitUnary(self, context)(p)
     override def visit[S](self: Put[S], context: T)(ref: Ref[S], p: LazyParsley[S]): U[Unit] = visitUnary(self, context)(p)
@@ -268,7 +274,7 @@ private [frontend] abstract class GenericLazyParsleyIVisitor[-T, +U[+_]] extends
     override def visit[A](self: <*[A], context: T)(p: LazyParsley[A], _q: =>LazyParsley[_]): U[A] = visitBinary[A, Any, A](self, context)(p, _q)
 
     // Iterative overrides.
-    override def visit[A](self: Many[A], context: T)(p: LazyParsley[A]): U[List[A]] = visitUnary(self, context)(p)
+    override def visit[A, C](self: Many[A, C], context: T)(p: LazyParsley[A], factory: Factory[A, C]): U[C] = visitUnary(self, context)(p)
     override def visit[A](self: ChainPost[A], context: T)(p: LazyParsley[A], _op: =>LazyParsley[A => A]): U[A] = visitBinary(self, context)(p, _op)
     override def visit[A, B](self: Chainl[A, B], context: T)(init: LazyParsley[B], p: =>LazyParsley[A], op: =>LazyParsley[(B, A) => B]): U[B] = {
         visitTernary(self, context)(init, p, op)
@@ -276,14 +282,14 @@ private [frontend] abstract class GenericLazyParsleyIVisitor[-T, +U[+_]] extends
     override def visit[A, B](self: Chainr[A, B], context: T)(p: LazyParsley[A], op: =>LazyParsley[(A, B) => B], wrap: A => B): U[B] = {
         visitBinary(self, context)(p, op)
     }
-    override def visit[A, B](self: SepEndBy1[A, B], context: T)(p: LazyParsley[A], sep: =>LazyParsley[B]): U[List[A]] = {
-        visitBinary[A, B, List[A]](self, context)(p, sep)
+    override def visit[A, C](self: SepEndBy1[A, C], context: T)(p: LazyParsley[A], sep: =>LazyParsley[_], factory: Factory[A, C]): U[C] = {
+        visitBinary[A, Any, C](self, context)(p, sep)
     }
-    override def visit[A](self: ManyUntil[A], context: T)(body: LazyParsley[Any]): U[List[A]] = visitUnary[Any, List[A]](self, context)(body)
+    override def visit[A, C](self: ManyUntil[A, C], context: T)(body: LazyParsley[Any], factory: Factory[A, C]): U[C] = visitUnary[Any, C](self, context)(body)
     override def visit(self: SkipManyUntil, context: T)(body: LazyParsley[Any]): U[Unit] = visitUnary[Any, Unit](self, context)(body)
 
     // Error overrides.
-    override def visit[A](self: ErrorLabel[A], context: T)(p: LazyParsley[A], labels: Seq[String]): U[A] = visitUnary(self, context)(p)
+    override def visit[A](self: ErrorLabel[A], context: T)(p: LazyParsley[A], label: String, labels: Seq[String]): U[A] = visitUnary(self, context)(p)
     override def visit[A](self: ErrorHide[A], context: T)(p: LazyParsley[A]): U[A] = visitUnary(self, context)(p)
     override def visit[A](self: ErrorExplain[A], context: T)(p: LazyParsley[A], reason: String): U[A] = visitUnary(self, context)(p)
     override def visit[A](self: ErrorAmend[A], context: T)(p: LazyParsley[A], partial: Boolean): U[A] = visitUnary(self, context)(p)

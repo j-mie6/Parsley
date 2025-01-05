@@ -6,13 +6,13 @@
 package parsley.token.numeric
 
 import parsley.Parsley, Parsley.atomic
-import parsley.token.descriptions.numeric.NumericDesc
+import parsley.token.descriptions.NumericDesc
 import parsley.token.errors.ErrorConfig
 
 import parsley.internal.deepembedding.Sign.CombinedType
 import parsley.internal.deepembedding.singletons
 
-private [token] final class SignedCombined(desc: NumericDesc, unsigned: Combined, err: ErrorConfig) extends Combined(err) {
+private [token] final class SignedCombined(desc: NumericDesc, unsigned: CombinedParsers, err: ErrorConfig) extends CombinedParsers(err) {
     private val sign = new Parsley(new singletons.Sign[CombinedType.resultType](CombinedType, desc.positiveSign))
 
     override def decimal: Parsley[Either[BigInt,BigDecimal]] = atomic(sign <*> unsigned.decimal)

@@ -50,12 +50,12 @@ private [deepembedding] final class Choice[A](private [backend] val alt1: Strict
             alts.addOne(p)
             alts.stealAll(alts_)
             ret
-        case Choice(_, Choice(alt1, alt2, alts: SinglyLinkedList[StrictParsley[A]]), alts_) =>
+        case Choice(_, Choice(alt1_, alt2_, alts: SinglyLinkedList[StrictParsley[A]]), alts_) =>
             assume(!alts.exists(_.isInstanceOf[Choice[_]]), "alts can never contain a choice")
             assume(!alts_.exists(_.isInstanceOf[Choice[_]]), "alts_ can never contain a choice")
-            this.alt2 = alt1
+            this.alt2 = alt1_
             this.alts = alts
-            alts.prependOne(alt2)
+            alts.prependOne(alt2_)
             alts.stealAll(alts_)
             this
         case _ => this
@@ -139,7 +139,7 @@ private [backend] object Choice {
         }
         else alt2 match {
             case Pure(x) => alt1 match {
-                case Attempt(u) => scopedState(u, producesResults) {
+                case Atomic(u) => scopedState(u, producesResults) {
                     instrs += new instructions.AlwaysRecoverWith[A](x)
                     if (!producesResults) instrs += instructions.Pop
                     result(())
@@ -159,7 +159,7 @@ private [backend] object Choice {
                                                       (implicit instrs: InstrBuffer, state: CodeGenState): M[R, Unit] = {
         val merge = state.getLabel(instructions.MergeErrorsAndFail)
         p match {
-            case Attempt(u) => scopedState(u, producesResults) {
+            case Atomic(u) => scopedState(u, producesResults) {
                 instrs += new instructions.RestoreAndPushHandler(merge)
                 rest |> {
                     instrs += instructions.ErrorToHints
@@ -237,9 +237,9 @@ private [backend] object Choice {
         // TODO: This can be done for case insensitive things too, but with duplicated branching
         case t@token.SoftKeyword(s) if t.caseSensitive => Some((s.head, t.expected.asExpectDescs(s), s.codePointCount(0, s.length), backtracks))
         case t@token.SoftOperator(s)             => Some((s.head, t.expected.asExpectDescs(s), s.codePointCount(0, s.length), backtracks))
-        case Attempt(t)                          => tablable(t, backtracks = true)
-        case ErrorLabel(t, labels)               => tablable(t, backtracks).map {
-            case (c, _, width, backtracks) => (c, labels.map(new ExpectDesc(_)), width, backtracks)
+        case Atomic(t)                          => tablable(t, backtracks = true)
+        case ErrorLabel(t, label, labels)        => tablable(t, backtracks).map {
+            case (c, _, width, backtracks) => (c, (label +: labels).map(new ExpectDesc(_)), width, backtracks)
         }
         case ErrorHide(t)                        => tablable(t, backtracks).map {
             case (c, _, _, backtracks) => (c, None, 0, backtracks)

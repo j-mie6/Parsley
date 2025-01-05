@@ -12,31 +12,30 @@ import parsley.Parsley.eof
 import parsley.character.string
 
 import token.{descriptions => desc}
-import token.predicate.implicits.Basic._
 
 class TokeniserTests extends ParsleyTest {
     val scala =
         desc.LexicalDesc(
-            desc.NameDesc(identifierStart = ('a' to 'z').toSet ++ ('A' to 'Z').toSet + '_',
-                          identifierLetter = ('a' to 'z').toSet ++ ('A' to 'Z').toSet ++ ('0' to '9').toSet + '_',
-                          operatorStart = Set('+', '-', ':', '/', '*', '='),
-                          operatorLetter = Set('+', '-', '/', '*')),
+            desc.NameDesc(identifierStart = Basic(('a' to 'z').toSet ++ ('A' to 'Z').toSet + '_'),
+                          identifierLetter = Basic(('a' to 'z').toSet ++ ('A' to 'Z').toSet ++ ('0' to '9').toSet + '_'),
+                          operatorStart = Basic(Set('+', '-', ':', '/', '*', '=')),
+                          operatorLetter = Basic(Set('+', '-', '/', '*'))),
             desc.SymbolDesc(hardKeywords = Set("if", "else", "for", "yield", "while", "def", "class",
                                                "trait", "abstract", "override", "val", "var", "lazy"),
                             hardOperators = Set(":", "=", "::", ":="),
                             caseSensitive = true),
-            desc.numeric.NumericDesc.plain,
-            desc.text.TextDesc.plain,
-            desc.SpaceDesc(commentStart = "/*",
-                           commentEnd = "*/",
-                           commentLine = "//",
-                           commentLineAllowsEOF = true,
-                           nestedComments = true,
-                           space = token.predicate.Basic(_.isWhitespace),
+            desc.NumericDesc.plain,
+            desc.TextDesc.plain,
+            desc.SpaceDesc(multiLineCommentStart = "/*",
+                           multiLineCommentEnd = "*/",
+                           lineCommentStart = "//",
+                           lineCommentAllowsEOF = true,
+                           multiLineNestedComments = true,
+                           space = Basic(_.isWhitespace),
                            whitespaceIsContextDependent = false))
     val scala_ =
         scala.copy(
-            spaceDesc = scala.spaceDesc.copy(nestedComments = false)
+            spaceDesc = scala.spaceDesc.copy(multiLineNestedComments = false)
         )
     val tokeniser = new token.Lexer(scala)
     val tokeniser_ = new token.Lexer(scala_)

@@ -6,7 +6,7 @@
 package parsley.token.names
 
 import parsley.Parsley
-import parsley.token.predicate.{CharPredicate, NotRequired}
+import parsley.token.{CharPred, NotRequired}
 
 /** This class defines a uniform interface for defining parsers for user-defined
   * names (identifiers and operators), independent of how whitespace should be
@@ -85,7 +85,7 @@ abstract class Names private[names] {
       * @note $disclaimer
       * @since 4.0.0
       */
-    def identifier(startChar: CharPredicate): Parsley[String]
+    def identifier(startChar: CharPred): Parsley[String]
     /** This parser will parse a user-defined operator based on the
       * defined operator start and operator letter. It
       * is capable of handling unicode characters if the
@@ -154,7 +154,7 @@ abstract class Names private[names] {
       * @note $disclaimer
       * @since 4.0.0
       */
-    def userDefinedOperator(startChar: CharPredicate, endChar: CharPredicate): Parsley[String]
+    def userDefinedOperator(startChar: CharPred, endChar: CharPred): Parsley[String]
     /** This combinator will parse a user-defined operator based on the
       * defined operator start and operator letter, refined by the
       * provided `startChar`. It is capable of handling unicode characters if the
@@ -191,7 +191,7 @@ abstract class Names private[names] {
       * @note $disclaimer
       * @since 4.1.0
       */
-    final def userDefinedOperator(startChar: CharPredicate): Parsley[String] = userDefinedOperator(startChar, NotRequired)
+    final def userDefinedOperator(startChar: CharPred): Parsley[String] = userDefinedOperator(startChar, NotRequired)
 
     // TODO: Two variants of the above that also have reasons that describe
     //       the requirements of the identifier/operator

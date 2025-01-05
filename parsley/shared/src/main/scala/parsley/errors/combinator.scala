@@ -40,11 +40,6 @@ import parsley.internal.errors.{CaretWidth, FlexibleCaret, RigidCaret}
   *     parsers that interact with the error system in some way.
   */
 object combinator {
-    // TODO: remove in 5.0, for MiMA's sake
-    // $COVERAGE-OFF$
-    private [parsley] def empty(caretWidth: Int): Parsley[Nothing] = Parsley.empty(caretWidth)
-    // $COVERAGE-ON$
-
     /** This combinator consumes no input and fails immediately with the given error messages.
       *
       * Produces a ''specialised'' error message where all the lines of the error are the
@@ -343,7 +338,7 @@ object combinator {
       *     offset than `p` originally started at. While this sounds like it is the same as "having consumed input" for the
       *     purposes of backtracking, they are disjoint concepts:
       *
-      *       1. in `attempt(p)`, `p` can ''observably'' consume input even though the wider parser does not consume input due to the `attempt`.
+      *       1. in `atomic(p)`, `p` can ''observably'' consume input even though the wider parser does not consume input due to the `atomic`.
       *       1. in `amend(p)`, `p` can consume input and may not backtrack even though the consumption is not ''observable'' in the error
       *          message due to the `amend`.
       *
@@ -441,7 +436,7 @@ object combinator {
           * @group filter
           */
         def guardAgainst(pred: PartialFunction[A, Seq[String]]): Parsley[A] = {
-            this.filterWith(new SpecialisedGen[A] {
+            this.filterWith(new SpecializedGen[A] {
                 override def messages(x: A) = pred(x)
             })(!pred.isDefinedAt(_))
         }
@@ -499,14 +494,50 @@ object combinator {
           * @return a parser which returns the result of this parser applied to pf, if possible.
           * @see [[parsley.Parsley.collect `collect`]], which is a basic version of this same combinator with no customised error message.
           * @see [[guardAgainst `guardAgainst`]], which is similar to `collectMsg`, except it does not transform the data.
+          * @see [[mapFilterMsg `mapFilterMsg`]], which is similar to `collectMsg`, except uses a `A => Either[Seq[String], B]` function.
           * @note $autoAmend
           * @note implemented in terms of [[collectWith `collectWith`]].
           * @group filter
           */
         def collectMsg[B](msggen: A => Seq[String])(pf: PartialFunction[A, B]): Parsley[B] = {
-            this.collectWith(new SpecialisedGen[A] {
+            this.collectWith(new SpecializedGen[A] {
                 override def messages(x: A) = msggen(x)
             })(pf)
+        }
+
+        /** This combinator conditionally transforms the result of this parser with a given function, if a `Left` is
+          * returned generates an error with its contexts, otherwise results the result inside the `Right`.
+          *
+          * Like [[Parsley.mapFilter `mapFilter`]], except allows for the error message generated to be
+          * specified for invalid parses.
+          *
+          * @example A good example of this combinator in use is for handling overflow in numeric literals.
+          * {{{
+          * val integer: Parsley[BigInt] = ...
+          * // this should be amended/entrenched for best results
+          * val int16: Parsley[Short] =
+          *     integer.filterWithMsg {
+          *         case x if x >= Short.MinValue
+          *                && x <= Short.MaxValue => Right(x.toShort)
+          *         case x => Left(Seq(s"integer literal &#36;n is not within the range -2^16 to +2^16-1"))
+          *     }
+          * }}}
+          *
+          * @since 5.0.0
+          * @param f the predicate that is tested against the parser result.
+          * @return a parser which returns the result of this parser applied to pf, if possible.
+          * @see [[parsley.Parsley.mapFilter `mapFilter`]], which is a basic version of this same combinator with no customised error message.
+          * @note $autoAmend
+          * @note implemented in terms of [[mapFilterWith `mapFilterWith`]].
+          * @group filter
+          */
+        def mapFilterMsg[B](f: A => Either[Seq[String], B]): Parsley[B] = {
+            this.mapFilterWith(new SpecializedGen[A] {
+                override def messages(x: A) = {
+                    val Left(errs) = f(x): @unchecked
+                    errs
+                }
+            })(x => f(x).toOption)
         }
 
         /** This combinator filters the result of this parser using the given partial-predicate, succeeding only when the predicate is undefined.
@@ -600,10 +631,9 @@ object combinator {
           * @group rich
           */
         def label(item: String, items: String*): Parsley[A] = {
-            if (item.isEmpty && items.isEmpty) this.hide
-            else this.labels(item +: items: _*)
+            require(item.nonEmpty && items.forall(_.nonEmpty), "labels cannot be empty strings")
+            new Parsley(new frontend.ErrorLabel(con(p).internal, item, items))
         }
-        private [combinator] def label(item: String): Parsley[A] = if (item.isEmpty) this.hide else this.labels(item)
 
         /** This combinator changes the expected component of any errors generated by this parser.
           *
@@ -616,12 +646,6 @@ object combinator {
           * @group rich
           */
         def ?(item: String): Parsley[A] = this.label(item)
-
-        // needs to be private up to parsley to support the ConfigImplUntyped
-        private [parsley] def labels(items: String*): Parsley[A] = {
-            require(items.forall(_.nonEmpty), "Labels cannot be empty strings")
-            new Parsley(new frontend.ErrorLabel(con(p).internal, items))
-        }
 
         /** This combinator adds a reason to error messages generated by this parser.
           *
@@ -637,10 +661,11 @@ object combinator {
           * @group rich
           */
         def explain(reason: String): Parsley[A] = {
-            require(reason.nonEmpty, "Reasons cannot be empty strings")
+            require(reason.nonEmpty, "reasons cannot be empty strings")
             new Parsley(new frontend.ErrorExplain(con(p).internal, reason))
         }
 
+        // TODO: check this documentation, I'm not sure it's correct
         /** This combinator hides the expected component of errors generated by this parser.
           *
           * When this parser fails having not ''observably''* consumed input, this combinator
@@ -655,60 +680,8 @@ object combinator {
           * @return a parser that does not produce an expected component on failure.
           * @group rich
           */
-        def hide: Parsley[A] = this.labels()
+        def hide: Parsley[A] = new Parsley(new frontend.ErrorHide(con(p).internal))
 
-        // TODO: this will become the new hide in 5.0.0
-        private [parsley] def newHide: Parsley[A] = new Parsley(new frontend.ErrorHide(con(p).internal))
-
-        // $COVERAGE-OFF$
-        /** This combinator parses this parser and then fails, using the result of this parser to customise the error message.
-          *
-          * Similar to `fail`, but first parses this parser: if it succeeded, then its result `x` is used to form the error
-          * message for the `fail` combinator by calling `msggen(x)`. If this parser fails, however, its error message will
-          * be generated instead.
-          *
-          * @param msggen the generator function for error message, creating a message based on the result of this parser.
-          * @return a parser that always fails, with the given generator used to produce the error message if this parser succeeded.
-          * @note $partialAmend
-          * @group fail
-          * @deprecated this combinator has not proven to be particularly useful, and will be replaced by a more appropriate,
-          *             not exactly the same, `verifiedFail` combinator.
-          */
-        @deprecated("This combinator will be removed in 5.0.0, without direct replacement", "4.2.0")
-        def !(msggen: A => String): Parsley[Nothing] = partialAmendThenDislodge {
-            parsley.position.withWidth(entrench(con(p))).flatMap { case (x, width) =>
-                combinator.fail(width, msggen(x))
-            }
-        }
-
-        /** This combinator parses this parser and then fails, using the result of this parser to customise the unexpected component
-          * of the error message.
-          *
-          * Similar to `unexpected`, but first parses this parser: if it succeeded, then its result `x` is used to form
-          * the unexpected component of the generated error by calling `msggen(x)`. If this parser fails, however,
-          * its error message will be returned untouched.
-          *
-          * @param msggen the generator function for error message, creating a message based on the result of this parser.
-          * @return a parser that always fails, with the given generator used to produce an unexpected message if this parser succeeded.
-          * @note $partialAmend
-          * @group fail
-          * @deprecated this combinator has not proven to be particularly useful and will be removed in 5.0.0. There is a similar, but not
-          *             exact replacement called `verifiedUnexpected`.
-          * @since 4.2.0
-          */
-        @deprecated("This combinator will be removed in 5.0.0, without direct replacement", "4.2.0")
-        def unexpected(msggen: A => String): Parsley[Nothing] = partialAmendThenDislodge {
-            parsley.position.withWidth(entrench(con(p))).flatMap { case (x, width) =>
-                combinator.unexpected(width, msggen(x))
-            }
-        }
-        // $COVERAGE-ON$
-
-        // $COVERAGE-OFF$
-        // TODO: remove in 5.0.0
-        @deprecated("better argument currying now, don't use", "4.4.0-RC2")
-        private [parsley] def filterWith(pred: A => Boolean, errGen: ErrorGen[A]): Parsley[A] = combinator.filterWith(con(p))(pred, errGen)
-        // $COVERAGE-ON$
         /** This combinator filters the result of this parser with the given predicate, generating an error with the
           * given error generator if the function returned `false`.
           *
@@ -722,11 +695,6 @@ object combinator {
           */
         def filterWith(errGen: ErrorGen[A])(pred: A => Boolean): Parsley[A] = combinator.filterWith(con(p))(pred, errGen)
 
-        // $COVERAGE-OFF$
-        // TODO: remove in 5.0.0
-        @deprecated("better argument currying now, don't use", "4.4.0-RC2")
-        private [parsley] def collectWith[B](pf: PartialFunction[A, B], errGen: ErrorGen[A]): Parsley[B] = combinator.collectWith(con(p))(pf, errGen)
-        // $COVERAGE-ON$
         /** This combinator conditionally transforms the result of this parser with a given partial function, generating an error with the
           * given error generator if the function is not defined on the result of this parser.
           *
@@ -740,11 +708,6 @@ object combinator {
           */
         def collectWith[B](errGen: ErrorGen[A])(pf: PartialFunction[A, B]): Parsley[B] = combinator.collectWith(con(p))(pf, errGen)
 
-        // $COVERAGE-OFF$
-        // TODO: remove in 5.0.0
-        @deprecated("better argument currying now, don't use", "4.4.0-RC2")
-        private [parsley] def mapFilterWith[B](f: A => Option[B], errGen: ErrorGen[A]): Parsley[B] = combinator.mapFilterWith(con(p))(f, errGen)
-        // $COVERAGE-ON$
         /** This combinator conditionally transforms the result of this parser with a given function, generating an error with the
           * given error generator if the function returns `None` given the result of this parser.
           *

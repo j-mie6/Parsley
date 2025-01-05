@@ -8,8 +8,6 @@ package parsley.token
 import parsley.ParsleyTest
 
 import descriptions._
-import descriptions.numeric._
-import descriptions.text._
 
 class DescriptionRequireTests extends ParsleyTest {
     "SymbolDesc" should "not allow an intersection between operators and keywords" in {
@@ -17,8 +15,8 @@ class DescriptionRequireTests extends ParsleyTest {
     }
 
     "ExponentDesc.Supported" should "not allow for empty exponents" in {
-        an [IllegalArgumentException] should be thrownBy ExponentDesc.Supported(false, Set.empty, 10, PlusSignPresence.Illegal)
-        an [IllegalArgumentException] should be thrownBy ExponentDesc.Supported(false, Set.empty, 10, PlusSignPresence.Optional)
+        an [IllegalArgumentException] should be thrownBy ExponentDesc.Supported(false, Set.empty, 10, PlusSignPresence.Illegal, true)
+        an [IllegalArgumentException] should be thrownBy ExponentDesc.Supported(false, Set.empty, 10, PlusSignPresence.Optional, true)
     }
 
     "NumericDesc" should "not allow for multiple prefixless descriptions" in {
@@ -89,42 +87,34 @@ class DescriptionRequireTests extends ParsleyTest {
     }
 
     "EscapeDesc" should "not allow for empty string escapes" in {
-        an [IllegalArgumentException] should be thrownBy EscapeDesc.plain.copy(multiMap = Map(("", 0)))
+        an [IllegalArgumentException] should be thrownBy EscapeDesc.plain.copy(mapping = Map(("", 0)))
     }
 
     it should "not permit ambiguity with the different mappings" in {
         an [IllegalArgumentException] should be thrownBy EscapeDesc.plain.copy(
             literals = Set('a'),
-            singleMap = Map(('a', 0))
-        )
-        an [IllegalArgumentException] should be thrownBy EscapeDesc.plain.copy(
-            literals = Set('a'),
-            multiMap = Map(("a", 0))
-        )
-        an [IllegalArgumentException] should be thrownBy EscapeDesc.plain.copy(
-            singleMap = Map(('a', 0)),
-            multiMap = Map(("a", 0))
+            mapping = Map(("a", 0))
         )
     }
 
     it should "not allow for constant escapes that aren't valid characters" in {
         noException should be thrownBy EscapeDesc.plain.copy(
-            singleMap = Map(('a', 0x10ffff))
+            mapping = Map(("a", 0x10ffff))
         )
         an [IllegalArgumentException] should be thrownBy EscapeDesc.plain.copy(
-            singleMap = Map(('a', 0x10ffff+1))
+            mapping = Map(("a", 0x10ffff+1))
         )
         an [IllegalArgumentException] should be thrownBy EscapeDesc.plain.copy(
-            singleMap = Map(('a', -10))
+            mapping = Map(("a", -10))
         )
     }
 
     "TextDesc" should "not allow for string literals without ends" in {
         an [IllegalArgumentException] should be thrownBy TextDesc.plain.copy(
-            stringEnds = Set("", "'"),
+            stringEnds = Set(("", "'")),
         )
         an [IllegalArgumentException] should be thrownBy TextDesc.plain.copy(
-            multiStringEnds = Set("", "'"),
+            multiStringEnds = Set(("", "'")),
         )
     }
 }

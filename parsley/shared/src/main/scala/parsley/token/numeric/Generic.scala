@@ -10,7 +10,7 @@ import parsley.character, character.{isHexDigit, isOctDigit, satisfy}
 import parsley.combinator.optional
 import parsley.errors.combinator.ErrorMethods
 import parsley.syntax.character.charLift
-import parsley.token.descriptions.numeric.{BreakCharDesc, NumericDesc}
+import parsley.token.descriptions.{BreakCharDesc, NumericDesc}
 import parsley.token.errors.{ErrorConfig, LabelConfig}
 
 private [token] class Generic(err: ErrorConfig) {
@@ -18,7 +18,7 @@ private [token] class Generic(err: ErrorConfig) {
     private def ofRadix(radix: Int, startDigit: Parsley[Char], digit: Parsley[Char], label: LabelConfig): Parsley[BigInt] = {
         val pf = pure((x: BigInt, d: Char) => x*radix + d.asDigit)
         val trailingDigit = label(digit)
-        parsley.expr.infix.secretLeft1(startDigit.map(d => BigInt(d.asDigit)), trailingDigit, pf)
+        parsley.expr.infix.secretLeft1(startDigit.map(d => BigInt(d.asDigit)), trailingDigit, pf, null) //FIXME: thread name?
     }
 
     private def ofRadix(radix: Int, digit: Parsley[Char], breakChar: Char, label: LabelConfig): Parsley[BigInt] = {
@@ -29,7 +29,7 @@ private [token] class Generic(err: ErrorConfig) {
         val trailingDigit =
             optional(err.labelNumericBreakChar.orElse(label)(breakChar)) *>
             label(digit)
-        parsley.expr.infix.secretLeft1(startDigit.map(d => BigInt(d.asDigit)), trailingDigit, pf)
+        parsley.expr.infix.secretLeft1(startDigit.map(d => BigInt(d.asDigit)), trailingDigit, pf, null) //FIXME: thread name?
     }
 
     // Digits
@@ -38,7 +38,7 @@ private [token] class Generic(err: ErrorConfig) {
     private def nonZeroOctDigit = satisfy(c => isOctDigit(c) && c != '0').label("octal digit")
     private def nonZeroBit = '1'.label("bit")
     // why secret? so that the above digits can be marked as digits without "non-zero or zero digit" nonsense
-    private def secretZero = '0'.newHide.as(BigInt(0))
+    private def secretZero = '0'.hide.as(BigInt(0))
 
     private def digit = character.digit
     private def hexDigit = character.hexDigit

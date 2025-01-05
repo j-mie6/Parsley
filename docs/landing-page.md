@@ -6,15 +6,15 @@ Parsley can be added to your project by one of the following configuration comma
 
 ```scala
 // SBT
-libraryDependencies += "com.github.j-mie6" %% "parsley" % "@VERSION@"
+libraryDependencies += "com.github.j-mie6" %% "parsley" % "@STABLE_VERSION@"
 
 // scala-cli
---dependency com.github.j-mie6::parsley:@VERSION@
+--dependency com.github.j-mie6::parsley:@STABLE_VERSION@
 // or in file
-//> using dep com.github.j-mie6::parsley:@VERSION@
+//> using dep com.github.j-mie6::parsley:@STABLE_VERSION@
 
 // mill
-ivy"com.github.j-mie6::parsley:@VERSION@"
+ivy"com.github.j-mie6::parsley:@STABLE_VERSION@"
 ```
 
 Alternatively, the most up-to-date development pre-release is `@PRERELEASE_VERSION@` and the

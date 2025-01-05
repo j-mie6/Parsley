@@ -26,6 +26,7 @@ object GOps {
       * @tparam A the base type consumed by the operators.
       * @tparam B the type produced/consumed by the operators.
       * @param fixity the fixity of the operators described.
+      * @param op0 The first operator.
       * @param ops The operators themselves, provided variadically.
       * @param wrap the function which should be used to wrap up a value of type `A` when required
       *             (this will be at right of a left-assoc chain, left of a right-assoc chain, or
@@ -34,7 +35,9 @@ object GOps {
       * @note currently a bug in scaladoc incorrect displays this functions type, it should be: `fixity.Op[A, B]`, NOT `Op[A, B]`.
       * @since 2.2.0
       */
-    def apply[A, B](fixity: Fixity)(ops: Parsley[fixity.Op[A, B]]*)(implicit wrap: A => B): Ops[A, B] = Ops[A, B](fixity)(choice(ops: _*))(wrap)
+    def apply[A, B](fixity: Fixity)(op0: Parsley[fixity.Op[A, B]], ops: Parsley[fixity.Op[A, B]]*)(implicit wrap: A => B): Ops[A, B] = {
+        Ops[A, B](fixity)(choice((op0 +: ops): _*))(wrap)
+    }
 }
 
 /** This helper object builds values of `Ops[A, B]` where `A <: B`, for subtyped heterogeneous precedence parsing.
@@ -55,11 +58,12 @@ object SOps {
       * @tparam B the type produced/consumed by the operators, must be a supertype of `A`.
       * @tparam A the base type consumed by the operators.
       * @param fixity the fixity of the operators described.
+      * @param op0 the first operator.
       * @param ops the operators themselves, provided variadically.
       * @since 3.0.0
       * @see [[Fixity `Fixity`]]
       * @note currently a bug in scaladoc incorrect displays this functions type, it should be: `fixity.Op[A, B]`, NOT `Op[A, B]`.
       * @note the order of types in this method is reversed compared with [[GOps.apply]], this is due to a Scala typing issue.
       */
-    def apply[B, A <: B](fixity: Fixity)(ops: Parsley[fixity.Op[A, B]]*): Ops[A, B] = GOps(fixity)(ops: _*)
+    def apply[B, A <: B](fixity: Fixity)(op0: Parsley[fixity.Op[A, B]], ops: Parsley[fixity.Op[A, B]]*): Ops[A, B] = GOps(fixity)(op0, ops: _*)
 }

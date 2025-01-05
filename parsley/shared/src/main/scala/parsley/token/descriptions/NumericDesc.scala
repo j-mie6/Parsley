@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-package parsley.token.descriptions.numeric
+package parsley.token.descriptions
 
 /** This class, and its subtypes, describe whether or not the plus sign (`+`) is allowed
   * in a specific position.
@@ -55,12 +55,14 @@ object ExponentDesc {
       * @param chars the set of possible characters that can start an exponent part of a literal.
       * @param base the base of the exponent: for instance `e3` with `base = 10` would represent multiplication by 1000.
       * @param positiveSign are positive (`+`) signs allowed, required, or illegal in front of the exponent?
+      * @param leadingZerosAllowed are extraneous zeros allowed at the start of the exponent?
       * @since 4.0.0
       */
     final case class Supported(compulsory: Boolean,
                                chars: Set[Char],
                                base: Int,
-                               positiveSign: PlusSignPresence
+                               positiveSign: PlusSignPresence,
+                               leadingZerosAllowed: Boolean,
                               ) extends ExponentDesc {
         require(chars.nonEmpty, "The characters used for floating point exponents must not be empty")
     }
@@ -137,7 +139,7 @@ final case class NumericDesc (literalBreakChar: BreakCharDesc,
                               decimalExponentDesc: ExponentDesc,
                               hexadecimalExponentDesc: ExponentDesc,
                               octalExponentDesc: ExponentDesc,
-                              binaryExponentDesc: ExponentDesc
+                              binaryExponentDesc: ExponentDesc,
                              ) {
     private def boolToInt(x: Boolean): Int = if (x) 1 else 0
 
@@ -199,10 +201,10 @@ object NumericDesc {
       * hexadecimalLeads = Set('x', 'X')
       * octalLeads = Set('o', 'O')
       * binaryLeads = Set('b', 'B')
-      * decimalExponentDesc = ExponentDesc.Supported(compulsory = false, chars = Set('e', 'E'), base = 10, positiveSign = PlusSignPresence.Optional)
-      * hexadecimalExponentDesc = ExponentDesc.Supported(compulsory = true, chars = Set('p', 'P'), base = 2, positiveSign = PlusSignPresence.Optional)
-      * octalExponentDesc = ExponentDesc.Supported(compulsory = true, chars = Set('e', 'E', 'p', 'P'), base = 2, positiveSign = PlusSignPresence.Optional)
-      * binaryExponentDesc = ExponentDesc.Supported(compulsory = true, chars = Set('e', 'E', 'p', 'P'), base = 2, positiveSign = PlusSignPresence.Optional)
+      * decimalExponentDesc = ExponentDesc.Supported(compulsory = false, chars = Set('e', 'E'), base = 10, positiveSign = PlusSignPresence.Optional, leadingZerosAllowed = true)
+      * hexadecimalExponentDesc = ExponentDesc.Supported(compulsory = true, chars = Set('p', 'P'), base = 2, positiveSign = PlusSignPresence.Optional, leadingZerosAllowed = true)
+      * octalExponentDesc = ExponentDesc.Supported(compulsory = true, chars = Set('e', 'E', 'p', 'P'), base = 2, positiveSign = PlusSignPresence.Optional, leadingZerosAllowed = true)
+      * binaryExponentDesc = ExponentDesc.Supported(compulsory = true, chars = Set('e', 'E', 'p', 'P'), base = 2, positiveSign = PlusSignPresence.Optional, leadingZerosAllowed = true)
       * }}}
       *
       * @since 4.0.0
@@ -225,9 +227,13 @@ object NumericDesc {
         octalLeads = Set('o', 'O'),
         binaryLeads = Set('b', 'B'),
         // exponents
-        decimalExponentDesc = ExponentDesc.Supported(compulsory = false, chars = Set('e', 'E'), base = 10, positiveSign = PlusSignPresence.Optional),
-        hexadecimalExponentDesc = ExponentDesc.Supported(compulsory = true, chars = Set('p', 'P'), base = 2, positiveSign = PlusSignPresence.Optional),
-        octalExponentDesc = ExponentDesc.Supported(compulsory = true, chars = Set('e', 'E', 'p', 'P'), base = 2, positiveSign = PlusSignPresence.Optional),
-        binaryExponentDesc = ExponentDesc.Supported(compulsory = true, chars = Set('e', 'E', 'p', 'P'), base = 2, positiveSign = PlusSignPresence.Optional)
+        decimalExponentDesc =
+            ExponentDesc.Supported(compulsory = false, chars = Set('e', 'E'), base = 10, positiveSign = PlusSignPresence.Optional, leadingZerosAllowed = true),
+        hexadecimalExponentDesc =
+            ExponentDesc.Supported(compulsory = true, chars = Set('p', 'P'), base = 2, positiveSign = PlusSignPresence.Optional, leadingZerosAllowed = true),
+        octalExponentDesc =
+            ExponentDesc.Supported(compulsory = true, chars = Set('e', 'E', 'p', 'P'), base = 2, positiveSign = PlusSignPresence.Optional, leadingZerosAllowed = true),
+        binaryExponentDesc =
+            ExponentDesc.Supported(compulsory = true, chars = Set('e', 'E', 'p', 'P'), base = 2, positiveSign = PlusSignPresence.Optional, leadingZerosAllowed = true),
     )
 }

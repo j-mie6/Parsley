@@ -11,15 +11,13 @@ import parsley.state.Ref
 
 import parsley.internal.deepembedding.backend, backend.StrictParsley
 
-import org.typelevel.scalaccompat.annotation.nowarn3
-
-private [parsley] final class Attempt[A](p: LazyParsley[A]) extends Unary[A, A](p) {
-    override def make(p: StrictParsley[A]): StrictParsley[A] = new backend.Attempt(p)
+private [parsley] final class Atomic[A](p: LazyParsley[A]) extends Unary[A, A](p) {
+    override def make(p: StrictParsley[A]): StrictParsley[A] = new backend.Atomic(p)
 
     // $COVERAGE-OFF$
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[A] = visitor.visit(this, context)(p)
 
-    override private[parsley] def prettyName = "atomic"
+    private [parsley] var debugName = "atomic"
     // $COVERAGE-ON$
 }
 private [parsley] final class Look[A](p: LazyParsley[A]) extends Unary[A, A](p) {
@@ -28,7 +26,7 @@ private [parsley] final class Look[A](p: LazyParsley[A]) extends Unary[A, A](p) 
     // $COVERAGE-OFF$
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[A] = visitor.visit(this, context)(p)
 
-    override private[parsley] def prettyName = "lookAhead"
+    private [parsley] var debugName = "lookAhead"
     // $COVERAGE-ON$
 }
 private [parsley] final class NotFollowedBy[A](p: LazyParsley[A]) extends Unary[A, Unit](p) {
@@ -37,7 +35,7 @@ private [parsley] final class NotFollowedBy[A](p: LazyParsley[A]) extends Unary[
     // $COVERAGE-OFF$
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[Unit] = visitor.visit(this, context)(p)
 
-    override private[parsley] def prettyName = "notFollowedBy"
+    private [parsley] var debugName = "notFollowedBy"
     // $COVERAGE-ON$
 }
 private [parsley] final class Put[S](val ref: Ref[S], _p: LazyParsley[S]) extends Unary[S, Unit](_p) with UsesRef {
@@ -46,7 +44,7 @@ private [parsley] final class Put[S](val ref: Ref[S], _p: LazyParsley[S]) extend
     // $COVERAGE-OFF$
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[Unit] = visitor.visit(this, context)(ref, _p)
 
-    override private[parsley] def prettyName = "Reg.put"
+    private [parsley] var debugName = "Ref.set"
     // $COVERAGE-ON$
 }
 private [parsley] final class NewReg[S, A](val ref: Ref[S], init: LazyParsley[S], body: =>LazyParsley[A]) extends Binary[S, A, A](init, body) with UsesRef {
@@ -55,7 +53,7 @@ private [parsley] final class NewReg[S, A](val ref: Ref[S], init: LazyParsley[S]
     // $COVERAGE-OFF$
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[A] = visitor.visit(this, context)(ref, init, body)
 
-    override private[parsley] def prettyName = "fillReg"
+    private [parsley] var debugName = "fillRef"
     // $COVERAGE-ON$
 }
 private [parsley] final class Span(p: LazyParsley[_]) extends Unary[Any, String](p) {
@@ -64,25 +62,25 @@ private [parsley] final class Span(p: LazyParsley[_]) extends Unary[Any, String]
     // $COVERAGE-OFF$
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[String] = visitor.visit(this, context)(p)
 
-    override private[parsley] def prettyName: String = "span"
+    private [parsley] var debugName: String = "span"
     // $COVERAGE-ON$
 }
 
 // $COVERAGE-OFF$
-private [parsley] final class Debug[A](p: LazyParsley[A], name: String, ascii: Boolean, break: Breakpoint, watchedRefs: Seq[(Ref[_], String)] @nowarn3)
+private [parsley] final class Debug[A](p: LazyParsley[A], name: String, ascii: Boolean, break: Breakpoint, watchedRefs: Seq[(Ref[_], String)])
     extends Unary[A, A](p) {
     override def make(p: StrictParsley[A]): StrictParsley[A] = new backend.Debug(p, name, ascii, break, watchedRefs)
 
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[A] = visitor.visit(this, context)(p, name, ascii, break, watchedRefs)
 
-    override private[parsley] def prettyName = "debug"
+    private [parsley] var debugName = "debug"
 }
 private [parsley] final class DebugError[A](p: LazyParsley[A], name: String, ascii: Boolean, errBuilder: ErrorBuilder[_]) extends Unary[A, A](p) {
     override def make(p: StrictParsley[A]): StrictParsley[A] = new backend.DebugError(p, name, ascii, errBuilder)
 
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[A] = visitor.visit(this, context)(p, name, ascii, errBuilder)
 
-    override private[parsley] def prettyName = "debugError"
+    private [parsley] var debugName = "debugError"
 }
 
 private [parsley] final class Profile[A](p: LazyParsley[A], name: String, profiler: Profiler) extends Unary[A, A](p) {
@@ -90,14 +88,14 @@ private [parsley] final class Profile[A](p: LazyParsley[A], name: String, profil
 
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[A] = visitor.visit(this, context)(p, name, profiler)
 
-    override private[parsley] def prettyName: String = "profile"
+    private [parsley] var debugName: String = "profile"
 }
 
-private [parsley] final class Opaque[A](p: LazyParsley[A]) extends Unary[A, A](p) {
-    override def make(p: StrictParsley[A]): StrictParsley[A] = new backend.Opaque(p)
+private [parsley] final class Impure[A](p: LazyParsley[A]) extends Unary[A, A](p) {
+    override def make(p: StrictParsley[A]): StrictParsley[A] = new backend.Impure(p)
 
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[A] = p.visit(visitor, context)
 
-    override private[parsley] def prettyName: String = "impure"
+    private [parsley] var debugName: String = "impure"
 }
 // $COVERAGE-ON$

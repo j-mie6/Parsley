@@ -38,12 +38,13 @@ object Ops {
       *
       * @tparam A the type associated with the operators (which it consumes and produces)
       * @param fixity the fixity of the operators described.
+      * @param op0 The first operator.
       * @param ops The operators themselves, in varargs.
       * @see [[Fixity `Fixity`]]
       * @note currently a bug in scaladoc incorrect displays this functions type, it should be: `fixity.Op[A, A]`, NOT `Op[A, A]`.
       * @since 2.2.0
       */
-    def apply[A](fixity: Fixity)(ops: Parsley[fixity.Op[A, A]]*): Ops[A, A] = GOps[A, A](fixity)(ops: _*)
+    def apply[A](fixity: Fixity)(op0: Parsley[fixity.Op[A, A]], ops: Parsley[fixity.Op[A, A]]*): Ops[A, A] = GOps[A, A](fixity)(op0, ops: _*)
 
     private [expr] def apply[A, B](fixity: Fixity)(op: Parsley[fixity.Op[A, B]])(implicit wrap: A => B): Ops[A, B] = new Ops[A, B] {
         private [expr] def chain(p: Parsley[A]): Parsley[B] = fixity.chain(p, op)

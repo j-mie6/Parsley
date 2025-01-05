@@ -34,7 +34,7 @@ import parsley.token.errors.{ErrorConfig, LabelWithExplainConfig}
   *   if the values are too big or too negatively big, they will
   *   be rounded to the corresponding infinity.
   */
-abstract class Real private[numeric](err: ErrorConfig) {
+abstract class RealParsers private[numeric](err: ErrorConfig) {
     /** This parser will parse a single real number literal, which is in decimal form (base 10).
       *
       * @since 4.0.0
@@ -292,13 +292,13 @@ abstract class Real private[numeric](err: ErrorConfig) {
 
     protected [numeric] def ensureFloat(number: Parsley[BigDecimal], label: LabelWithExplainConfig): Parsley[Float] = {
         err.filterRealOutOfBounds(err.floatName, BigDecimal(Float.MinValue.toDouble), BigDecimal(Float.MaxValue.toDouble)).collect(label(number)) {
-            case n if Real.isFloat(n) => n.toFloat
+            case n if RealParsers.isFloat(n) => n.toFloat
         }
     }
 
     protected [numeric] def ensureDouble(number: Parsley[BigDecimal], label: LabelWithExplainConfig): Parsley[Double] = {
         err.filterRealOutOfBounds(err.doubleName, BigDecimal(Double.MinValue), BigDecimal(Double.MaxValue)).collect(label(number)) {
-            case n if Real.isDouble(n) => n.toDouble
+            case n if RealParsers.isDouble(n) => n.toDouble
         }
     }
 
@@ -323,7 +323,7 @@ abstract class Real private[numeric](err: ErrorConfig) {
     // $COVERAGE-ON$
 }
 
-private [numeric] object Real {
+private [numeric] object RealParsers {
     def isDouble(n: BigDecimal): Boolean = {
         n == 0.0 || n == -0.0 || {
             val x = n.toDouble

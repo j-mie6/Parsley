@@ -9,7 +9,7 @@ import parsley.Parsley
 import parsley.token.Lexeme
 import parsley.token.errors.{ErrorConfig, LabelWithExplainConfig}
 
-private [token] final class LexemeReal(real: Real, lexeme: Lexeme, err: ErrorConfig) extends Real(err) {
+private [token] final class LexemeReal(real: RealParsers, lexeme: Lexeme, err: ErrorConfig) extends RealParsers(err) {
     override lazy val decimal: Parsley[BigDecimal] = lexeme(real.decimal)
     override lazy val hexadecimal: Parsley[BigDecimal] = lexeme(real.hexadecimal)
     override lazy val octal: Parsley[BigDecimal] = lexeme(real.octal)

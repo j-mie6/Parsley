@@ -10,16 +10,16 @@ import parsley.character.{char, string, strings}
 import parsley.unicode
 import parsley.errors.combinator.{ErrorMethods, amend}
 import parsley.token.descriptions.{NameDesc, SymbolDesc}
-import parsley.token.errors.ErrorConfig
+import parsley.token.errors.{ErrorConfig, NotConfigured}
 
 // $COVERAGE-OFF$
-private [token] class OriginalSymbol(nameDesc: NameDesc, symbolDesc: SymbolDesc, err: ErrorConfig) extends Symbol(err) {
+private [token] class OriginalSymbol(nameDesc: NameDesc, symbolDesc: SymbolDesc, err: ErrorConfig) extends Symbol {
 
     override def apply(name: String): Parsley[Unit] = {
         require(name.nonEmpty, "Symbols may not be empty strings")
         if (symbolDesc.hardKeywords(name))       softKeyword(name)
         else if (symbolDesc.hardOperators(name)) softOperator(name)
-        else                                     atomic(string(name)).void
+        else                                     err.labelSymbol.getOrElse(name, NotConfigured).orElse(err.defaultSymbolPunctuation.config(name))(atomic(string(name)).void)
     }
 
     override def apply(name: Char): Parsley[Unit] = char(name).void
@@ -45,7 +45,7 @@ private [token] class OriginalSymbol(nameDesc: NameDesc, symbolDesc: SymbolDesc,
     override def softKeyword(name: String): Parsley[Unit] = {
         require(name.nonEmpty, "Keywords may not be empty strings")
         atomic {
-            err.labelSymbolKeyword(name)(caseString(name)) *>
+            err.labelSymbol.getOrElse(name, NotConfigured).orElse(err.defaultSymbolKeyword.config(name))(caseString(name)) *>
             notFollowedBy(identLetter).label(err.labelSymbolEndOfKeyword(name))
         }
     }
@@ -58,11 +58,11 @@ private [token] class OriginalSymbol(nameDesc: NameDesc, symbolDesc: SymbolDesc,
         }.toList
         ends match {
             case Nil => atomic {
-                err.labelSymbolOperator(name)(string(name)) *>
+                err.labelSymbol.getOrElse(name, NotConfigured).orElse(err.defaultSymbolOperator.config(name))(string(name)) *>
                 notFollowedBy(opLetter).label(err.labelSymbolEndOfOperator(name))
             }
             case end::ends => atomic {
-                err.labelSymbolOperator(name)(string(name)) *>
+                err.labelSymbol.getOrElse(name, NotConfigured).orElse(err.defaultSymbolOperator.config(name))(string(name)) *>
                 notFollowedBy(opLetter <|> strings(end, ends: _*)).label(err.labelSymbolEndOfOperator(name))
             }
         }

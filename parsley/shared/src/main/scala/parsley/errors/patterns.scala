@@ -50,7 +50,7 @@ object patterns {
           * @note $atomicNonTerminal
           */
         def verifiedFail(msggen: A => Seq[String]): Parsley[Nothing] = this.verifiedWith {
-            new SpecialisedGen[A] {
+            new SpecializedGen[A] {
                 override def messages(x: A) = msggen(x)
             }
         }
@@ -80,37 +80,6 @@ object patterns {
           * @note $atomicNonTerminal
           */
         def verifiedUnexpected: Parsley[Nothing] = this.verifiedWithVanillaRaw(_ => None)
-
-        // $COVERAGE-OFF$
-        /** Ensures this parser does not succeed, failing with a vanilla error with an unexpected message and caret spanning the parse and a given reason.
-          *
-          * If this parser succeeds, input is consumed and this combinator will fail, producing an unexpected message the same width as
-          * the parse along with the given reason. However, if this parser fails, no input is consumed and an empty error is generated.
-          * This parser will produce no labels if it fails.
-          *
-          * @param reason the reason that this parser is illegal.
-          * @since 4.2.0
-          * @note $autoAmend
-          * @note $atomicNonTerminal
-          */
-        @deprecated("This combinator will be removed in 5.0.0, use `verifiedExplain` instead", "4.5.0")
-        def verifiedUnexpected(reason: String): Parsley[Nothing] = this.verifiedWithVanillaRaw(_ => Some(reason))
-
-        /** Ensures this parser does not succeed, failing with a vanilla error with an unexpected message and caret spanning the parse and a reason generated
-          * from this parser's result.
-          *
-          * If this parser succeeds, input is consumed and this combinator will fail, producing an unexpected message the same width as
-          * the parse along with a reason generated from the successful parse. However, if this parser fails, no input is consumed and an empty error
-          * is generated. This parser will produce no labels if it fails.
-          *
-          * @param reason a function that produces a reason for the error given the parsed result.
-          * @since 4.2.0
-          * @note $autoAmend
-          * @note $atomicNonTerminal
-          */
-        @deprecated("This combinator will be removed in 5.0.0, use `verifiedExplain` instead", "4.5.0")
-        def verifiedUnexpected(reason: A => String): Parsley[Nothing] = this.verifiedWithVanillaRaw(x => Some(reason(x)))
-        // $COVERAGE-ON$
 
         /** Ensures this parser does not succeed, failing with a vanilla error with an unexpected message and caret spanning the parse and a given reason.
           *
@@ -150,7 +119,7 @@ object patterns {
           * @note $autoAmend
           * @note $atomicNonTerminal
           */
-        def verifiedWith(err: ErrorGen[A]): Parsley[Nothing] = amend(err(withWidth(atomic(con(p)).newHide)))
+        def verifiedWith(err: ErrorGen[A]): Parsley[Nothing] = amend(err(withWidth(atomic(con(p)).hide)))
 
         @inline private def verifiedWithVanilla(unexGen: A => VanillaGen.UnexpectedItem, reasonGen: A => Option[String]) = verifiedWith {
             new VanillaGen[A] {
@@ -194,7 +163,7 @@ object patterns {
           * @note $autoAmend
           * @note $atomicNonTerminal
           */
-        def preventativeFail(msggen: A => Seq[String]): Parsley[Unit] = this.preventWith(new SpecialisedGen[A] {
+        def preventativeFail(msggen: A => Seq[String]): Parsley[Unit] = this.preventWith(new SpecializedGen[A] {
             override def messages(x: A) = msggen(x)
         })
 
@@ -254,7 +223,7 @@ object patterns {
           * @note $atomicNonTerminal
           */
         def preventWith(err: ErrorGen[A], labels: String*): Parsley[Unit] = {
-            val inner: Parsley[Either[(A, Int), Unit]] = withWidth(atomic(con(p)).newHide) <+> unit
+            val inner: Parsley[Either[(A, Int), Unit]] = withWidth(atomic(con(p)).hide) <+> unit
             val labelledErr = labels match {
                 case l1 +: ls       => err.parser.label(l1, ls: _*)
                 case _              => err.parser

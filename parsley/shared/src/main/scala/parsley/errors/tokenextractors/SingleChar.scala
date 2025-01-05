@@ -5,7 +5,7 @@
  */
 package parsley.errors.tokenextractors
 
-import parsley.errors.{helpers, ErrorBuilder, Token, TokenSpan}
+import parsley.errors.{helpers, ErrorBuilder, Token}
 
 import org.typelevel.scalaccompat.annotation.unused
 
@@ -34,7 +34,7 @@ object SingleChar {
     def unexpectedToken(cs: Iterable[Char]): Token = {
         val s = cs.take(2).mkString
         s.codePointAt(0) match {
-            case helpers.WhitespaceOrUnprintable(name) => Token.Named(name, TokenSpan.Width(1))
+            case helpers.WhitespaceOrUnprintable(name) => Token.Named(name, 1)
             case cp if Character.isSupplementaryCodePoint(cp) => Token.Raw(s)
             case cp => Token.Raw(s"${cp.toChar}")
         }

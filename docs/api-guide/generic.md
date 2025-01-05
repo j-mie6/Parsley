@@ -29,7 +29,7 @@ val py: Parsley[Int] = pure(6)
 ```
 
 ```scala mdoc
-import parsley.syntax.zipped.Zipped2
+import parsley.syntax.zipped.zippedSyntax2
 case class Foo(x: Int, y: Int)
 // with px, py of type Parsley[Int]
 val p = (px, py).zipped(Foo(_, _))
@@ -74,7 +74,8 @@ templates (see [the associated tutorial](../tutorial/parser-bridge-pattern.md) f
 ## How to use
 The [`parsley.generic`](@:api(parsley.generic$)) module contains `ParserBridge1` through
 `ParserBridge22` as well as `ParserBridge0`; they all extend `ParserBridgeSingleton`, which provides
-some additional combinators.
+some additional combinators as well as `ErrorBridge`, which allows labels and a reason to be attached
+to a bridge.
 
 ### `ParserBridge1[-T1, +R]` through `ParserBridge22[-T1, .., -T22, +R]`
 Each of these traits are designed to be implemented ideally by a companion object for a `case class`.
@@ -131,7 +132,7 @@ like in [chain](expr/chain.md) or [precedence](expr/precedence.md) combinators:
 import parsley.expr.chain
 import parsley.syntax.character.stringLift
 
-val term = chain.left1(px, Add.from("+")) // or `Add <# "+"`
+val term = chain.left1(px)(Add.from("+")) // or `Add <# "+"`
 ```
 
 They are analogous to the `as` and `#>` combinators respectively.
@@ -169,6 +170,24 @@ case object Bad extends ParserBridge0[Bad.type]
 Resolving this will require introducing an extra type, like `Expr` in the example with
 `NullLit`, which breaks the cycle sufficiently.
 @:@
+
+### `ErrorBridge`
+The `ParserSingletonBridge` extends the `ErrorBridge` trait, which is shaped as follows:
+
+```scala
+trait ErrorBridge {
+    def labels: List[String] = Nil
+    def reason: Option[String] = None
+
+    // applies the above labels and reason if applicable
+    final protected def error[T](p: Parsley[T]): Parsley[T]
+}
+```
+
+This allows all derived bridges to specify labels to refer to the parser if it fails, as well as
+a reason why it might be needed. This is useful because, anecdotally, I've found that ~70% of
+instances of the `label` combinator occur attached directly to a bridge application; and this
+therefore allows for error annotation to kept away from the main parser description.
 
 ## Additional Use Cases
 Other than the natural decoupling that the bridges provide, there are some more specialised

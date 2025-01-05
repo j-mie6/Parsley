@@ -5,33 +5,33 @@
  */
 package parsley.token.text
 
-import scala.Predef.{String => SString, ArrowAssoc => _, _}
+import scala.Predef.{ArrowAssoc => _, _}
 import parsley.ParsleyTest
 import parsley.token.LexemeImpl
 
-import parsley.token.descriptions.text._
+import parsley.token.descriptions._
 import parsley.token.errors.ErrorConfig
-import parsley.token.predicate._
 import org.scalactic.source.Position
+import parsley.token.{Basic, NotRequired, Unicode}
 
 class CharacterTests extends ParsleyTest {
     val errConfig = new ErrorConfig
     val generic = new parsley.token.numeric.Generic(errConfig)
-    def makeChar(desc: TextDesc): Character = new LexemeCharacter(new ConcreteCharacter(desc, new Escape(desc.escapeSequences, errConfig, generic), errConfig), LexemeImpl.empty)
+    def makeChar(desc: TextDesc): CharacterParsers = new LexemeCharacter(new ConcreteCharacter(desc, new Escape(desc.escapeSequences, errConfig, generic), errConfig), LexemeImpl.empty)
 
-    def unicodeCases(char: Character)(tests: (SString, Option[Int], Position)*): Unit = cases(char.fullUtf16)(tests: _*)
-    def bmpCases(char: Character)(tests: (SString, Option[Char], Position)*): Unit = cases(char.basicMultilingualPlane)(tests: _*)
-    def asciiCases(char: Character)(tests: (SString, Option[Char], Position)*): Unit = cases(char.ascii)(tests: _*)
-    def extAsciiCases(char: Character)(tests: (SString, Option[Char], Position)*): Unit = cases(char.latin1)(tests: _*)
+    def unicodeCases(char: CharacterParsers)(tests: (String, Option[Int], Position)*): Unit = cases(char.fullUtf16)(tests: _*)
+    def bmpCases(char: CharacterParsers)(tests: (String, Option[Char], Position)*): Unit = cases(char.basicMultilingualPlane)(tests: _*)
+    def asciiCases(char: CharacterParsers)(tests: (String, Option[Char], Position)*): Unit = cases(char.ascii)(tests: _*)
+    def extAsciiCases(char: CharacterParsers)(tests: (String, Option[Char], Position)*): Unit = cases(char.latin1)(tests: _*)
 
-    def unicodeCases(desc: TextDesc)(tests: (SString, Option[Int], Position)*): Unit = unicodeCases(makeChar(desc))(tests: _*)
-    def bmpCases(desc: TextDesc)(tests: (SString, Option[Char], Position)*): Unit = bmpCases(makeChar(desc))(tests: _*)
-    def asciiCases(desc: TextDesc)(tests: (SString, Option[Char], Position)*): Unit = asciiCases(makeChar(desc))(tests: _*)
-    def extAsciiCases(desc: TextDesc)(tests: (SString, Option[Char], Position)*): Unit = extAsciiCases(makeChar(desc))(tests: _*)
+    def unicodeCases(desc: TextDesc)(tests: (String, Option[Int], Position)*): Unit = unicodeCases(makeChar(desc))(tests: _*)
+    def bmpCases(desc: TextDesc)(tests: (String, Option[Char], Position)*): Unit = bmpCases(makeChar(desc))(tests: _*)
+    def asciiCases(desc: TextDesc)(tests: (String, Option[Char], Position)*): Unit = asciiCases(makeChar(desc))(tests: _*)
+    def extAsciiCases(desc: TextDesc)(tests: (String, Option[Char], Position)*): Unit = extAsciiCases(makeChar(desc))(tests: _*)
 
     val plain = TextDesc.plain.copy(
         graphicCharacter = Unicode(_ >= ' '),
-        escapeSequences = EscapeDesc.plain.copy(multiMap = Map(("lf", '\n'), ("lam", 'λ'), ("pound", '£'), ("smile", 0x1F642 /*🙂*/))),
+        escapeSequences = EscapeDesc.plain.copy(mapping = Map(("lf", '\n'), ("lam", 'λ'), ("pound", '£'), ("smile", 0x1F642 /*🙂*/))),
     )
     val plainChar = makeChar(plain)
 

@@ -7,7 +7,6 @@ package parsley.token.symbol
 
 import parsley.Parsley
 import parsley.errors.combinator.ErrorMethods
-import parsley.token.errors.{ErrorConfig, LabelConfig}
 
 /** This class provides implicit functionality to promote string
   * literals into tokens.
@@ -57,7 +56,7 @@ abstract class ImplicitSymbol private [symbol] {
   *
   * @since 4.0.0
   */
-abstract class Symbol private[symbol] (err: ErrorConfig) {
+abstract class Symbol private[symbol] {
     /** $stringApply
       *
       * Additionally applies the given label as the name of the symbol.
@@ -129,74 +128,72 @@ abstract class Symbol private[symbol] (err: ErrorConfig) {
       *
       * @since 4.0.0
       */
-    final val implicits: ImplicitSymbol = new ImplicitSymbol {
+    val implicits: ImplicitSymbol = new ImplicitSymbol {
         /** @inheritdoc */
-        implicit def implicitSymbol(s: String): Parsley[Unit] = apply(s)
+        implicit def implicitSymbol(s: String): Parsley[Unit] = apply(s).uo(s""""$s"""")
     }
 
     // $COVERAGE-OFF$
-    // These really don't need testing
-    private final def apply(name: Char, label: LabelConfig): Parsley[Unit] = label(apply(name))
     /** This parser parses a semicolon `;` as a symbol.
       *
       * @since 4.0.0
       */
-    final lazy val semi: Parsley[Unit] = apply(';', err.labelSymbolSemi)
+    final lazy val semi: Parsley[Unit] = apply(';')
     /** This parser parses a comma `,` as a symbol.
       *
       * @since 4.0.0
       */
-    final lazy val comma: Parsley[Unit] = apply(',', err.labelSymbolComma)
+    final lazy val comma: Parsley[Unit] = apply(',')
     /** This parser parses a colon `:` as a symbol.
       *
       * @since 4.0.0
       */
-    final lazy val colon: Parsley[Unit] = apply(':', err.labelSymbolColon)
+    final lazy val colon: Parsley[Unit] = apply(':')
     /** This parser parses a dot `.` as a symbol.
       *
       * @since 4.0.0
       */
-    final lazy val dot: Parsley[Unit] = apply('.', err.labelSymbolDot)
+    final lazy val dot: Parsley[Unit] = apply('.')
 
     /** This parser parses an open parenthesis `(` as a symbol.
       *
       * @since 4.0.0
       */
-    final lazy val openParen: Parsley[Unit] = apply('(', err.labelSymbolOpenParen)
+    final lazy val openParen: Parsley[Unit] = apply('(')
     /** This parser parses an open brace `{` as a symbol.
       *
       * @since 4.0.0
       */
-    final lazy val openBrace: Parsley[Unit] = apply('{', err.labelSymbolOpenBrace)
+    final lazy val openBrace: Parsley[Unit] = apply('{')
     /** This parser parses an open square bracket `[` as a symbol.
       *
       * @since 4.0.0
       */
-    final lazy val openSquare: Parsley[Unit] = apply('[', err.labelSymbolOpenSquare)
+    final lazy val openSquare: Parsley[Unit] = apply('[')
     /** This parser parses an open angle bracket `<` as a symbol.
       *
       * @since 4.0.0
       */
-    final lazy val openAngle: Parsley[Unit] = apply('<', err.labelSymbolOpenAngle)
+    final lazy val openAngle: Parsley[Unit] = apply('<')
     /** This parser parses a closing parenthesis `)` as a symbol.
       *
       * @since 4.0.0
       */
-    final lazy val closingParen: Parsley[Unit] = apply(')', err.labelSymbolClosingParen)
+    final lazy val closingParen: Parsley[Unit] = apply(')')
     /** This parser parses a closing brace `}` as a symbol.
       *
       * @since 4.0.0
       */
-    final lazy val closingBrace: Parsley[Unit] = apply('}', err.labelSymbolClosingBrace)
+    final lazy val closingBrace: Parsley[Unit] = apply('}')
     /** This parser parses a closing square bracket `]` as a symbol.
       *
       * @since 4.0.0
       */
-    final lazy val closingSquare: Parsley[Unit] = apply(']', err.labelSymbolClosingSquare)
+    final lazy val closingSquare: Parsley[Unit] = apply(']')
     /** This parser parses a closing square bracket `>` as a symbol.
       *
       * @since 4.0.0
       */
-    final lazy val closingAngle: Parsley[Unit] = apply('>', err.labelSymbolClosingAngle)
+    final lazy val closingAngle: Parsley[Unit] = apply('>')
     // $COVERAGE-ON$
 }

@@ -39,7 +39,7 @@ parse into an `Int`: behold, the magic of combinators!):
 import parsley.Parsley, Parsley.atomic
 import parsley.character.digit
 import parsley.syntax.character.charLift
-import parsley.syntax.zipped.Zipped2
+import parsley.syntax.zipped._
 
 // Standard number parser
 val number = digit.foldLeft1[Int](0)((n, d) => n * 10 + d.asDigit)
@@ -125,16 +125,14 @@ val number = digit.foldLeft1[Int](0)((n, d) => n * 10 + d.asDigit)
 val add = (x: Int, y: Int) => x + y
 val sub = (x: Int, y: Int) => x - y
 
-// chain.left1[A](p: Parsley[A], op: Parsley[(A, A) => A]): Parsley[A]
-lazy val expr: Parsley[Int] = chain.left1(term, '+'.as(add) | '-'.as(sub))
-lazy val term               = chain.left1[Int](atom, '*' as (_ * _))
+// chain.left1[A](p: Parsley[A])(op: Parsley[(A, A) => A]): Parsley[A]
+lazy val expr: Parsley[Int] = chain.left1(term)('+'.as(add) | '-'.as(sub))
+lazy val term               = chain.left1(atom)('*' as (_ * _))
 lazy val atom               = '(' ~> expr <~ ')' | number
 ```
 
 The structure of the parser is roughly the same, however now you'll notice that `expr` and `term`
 are no longer self-recursive, and neither `term` nor `atom` need to be lazy (or have explicit types).
-Just to illustrate, if we provide the type argument to `chain.left1` we can continue to use
-`_ * _`, but without it, we need explicit type signatures: see `add` and `sub`.
 
 @:todo(The first type parameter represents the type of the `atom`s, and the second is the type of the `term`
 itself: unlike mainstream parser combinator libraries in Haskell, Parsley allows these types to vary \(see
@@ -144,10 +142,10 @@ To make the relationship very clear between what we had before and what we have 
 the transformation from recursive to `chains` follows these shape:
 
 ```scala
-self <**> (op <*> next) | next        == chain.left1(next, op)  // flipped op
-self <**> op <*> next | next          == chain.left1(next, op)  // normal op
-next <**> (op <*> self </> identity)  == chain.right1(next, op) // no backtracking, flipped
-atomic(next <**> op <*> self) | next  == chain.right1(next, op) // backtracking, normal op
+self <**> (op <*> next) | next        == chain.left1(next)(op)  // flipped op
+self <**> op <*> next | next          == chain.left1(next)(op)  // normal op
+next <**> (op <*> self </> identity)  == chain.right1(next)(op) // no backtracking, flipped
+atomic(next <**> op <*> self) | next  == chain.right1(next)(op) // backtracking, normal op
 ```
 
 In this parser, the nesting of the chains dictates the precedence order (again, terms are found _inside_

@@ -5,10 +5,11 @@
  */
 package parsley
 
-import parsley.syntax.zipped.Zipped3
+import parsley.syntax.zipped.zippedSyntax3
 
 import parsley.internal.deepembedding.singletons
 
+// TODO: position grouping?
 /** This module contains parsers that provide a way to extract position information during a parse.
   *
   * Position parsers can be important
@@ -18,7 +19,8 @@ import parsley.internal.deepembedding.singletons
   *
   * @since 4.2.0
   */
-object position {
+object position extends position
+private [parsley] trait position {
     /** This parser returns the current line number (starting at 1) of the input without having any other effect.
       *
       * When this combinator is ran, no input is required, nor consumed, and
@@ -36,9 +38,9 @@ object position {
       * }}}
       *
       * @return a parser that returns the line number the parser is currently at.
-      * @group pos
       */
-    val line: Parsley[Int] = new Parsley(singletons.Line)
+    final val line: Parsley[Int] = _line
+    @inline private def _line = new Parsley(singletons.Line)
     /** This parser returns the current column number (starting at 1) of the input without having any other effect.
       *
       * When this combinator is ran, no input is required, nor consumed, and
@@ -57,9 +59,9 @@ object position {
       *
       * @return a parser that returns the column number the parser is currently at.
       * @note in the presence of wide unicode characters, the value returned may be inaccurate.
-      * @group pos
       */
-    val col: Parsley[Int] = new Parsley(singletons.Col)
+    final val col: Parsley[Int] = _col
+    @inline private def _col = new Parsley(singletons.Col)
     /** This parser returns the current line and column numbers (starting at 1) of the input without having any other effect.
       *
       * When this combinator is ran, no input is required, nor consumed, and
@@ -78,12 +80,12 @@ object position {
       *
       * @return a parser that returns the line and column number the parser is currently at.
       * @note in the presence of wide unicode characters, the column value returned may be inaccurate.
-      * @group pos
       */
-    val pos: Parsley[(Int, Int)] = line <~> col
+    final val pos: Parsley[(Int, Int)] = _pos.uo("pos")
+    @inline private def _pos = _line.zip(_col)
 
     // this is subject to change at the slightest notice, do NOT expose
-    private [parsley] val internalOffset: Parsley[Int] = new Parsley(singletons.Offset)
+    private [parsley] final def internalOffset: Parsley[Int] = new Parsley(singletons.Offset)
 
     /** This parser returns the current offset into the input (starting at 0) without having any other effect.
       *
@@ -104,9 +106,9 @@ object position {
       * @return a parser that returns the offset the parser is currently at.
       * @note offset does not take wide unicode codepoints into account.
       */
-    val offset: Parsley[Int] = internalOffset
+    final val offset: Parsley[Int] = internalOffset
 
-    private [parsley] def withSpan[A, S](end: Parsley[S])(p: Parsley[A]): Parsley[(S, A, S)] = (end, p, end).zipped
+    private [parsley] final def withSpan[A, S](end: Parsley[S])(p: Parsley[A]): Parsley[(S, A, S)] = (end, p, end).zipped
 
     /** This combinator returns the result of a given parser and the number of characters it consumed.
       *
@@ -125,5 +127,5 @@ object position {
       * @note the value returned is the number of 16-bit ''characters'' consumed, not unicode codepoints.
       * @since 4.4.0
       */
-    def withWidth[A](p: Parsley[A]): Parsley[(A, Int)] = (offset, p, offset).zipped((s, x, e) => (x, e-s))
+    final def withWidth[A](p: Parsley[A]): Parsley[(A, Int)] = (internalOffset.ut(), p, internalOffset.ut()).zipped((s, x, e) => (x, e-s)).uo("withWidth")
 }

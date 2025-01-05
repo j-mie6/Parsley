@@ -7,7 +7,7 @@ package parsley.errors.tokenextractors
 
 import scala.collection.immutable.WrappedString
 
-import parsley.errors.{helpers, ErrorBuilder, Token, TokenSpan}
+import parsley.errors.{helpers, ErrorBuilder, Token}
 
 import org.typelevel.scalaccompat.annotation.unused
 
@@ -34,7 +34,7 @@ object MatchParserDemand {
       * @since 4.0.0
       */
     def unexpectedToken(cs: Iterable[Char], amountOfInputParserWanted: Int): Token = cs match {
-        case helpers.WhitespaceOrUnprintable(name) => Token.Named(name, TokenSpan.Width(1))
+        case helpers.WhitespaceOrUnprintable(name) => Token.Named(name, 1)
         case _ => Token.Raw(substring(cs, amountOfInputParserWanted))
     }
 

@@ -112,5 +112,4 @@ object precedence {
         case Atoms(atom0, atoms @ _*) => choice((atom0 +: atoms): _*)
         case Level(lvls, ops) => ops.chain(crushLevels(lvls))
     }
-
 }

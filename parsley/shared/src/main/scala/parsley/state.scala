@@ -5,15 +5,17 @@
  */
 package parsley
 
-import scala.collection.mutable
+import scala.collection.Factory
 
+import parsley.XAssert._
 import parsley.combinator.{whenS, whileS}
-import parsley.syntax.zipped.Zipped2
+import parsley.syntax.zipped.{zippedSyntax2}
+import parsley.exceptions.UnfilledReferenceException
 
-import parsley.internal.deepembedding.frontend
+import parsley.internal.deepembedding.{frontend, singletons}
 
-import Parsley.{fresh, pure}
-import org.typelevel.scalaccompat.annotation.nowarn
+import Parsley.{fresh, pure, empty}
+
 
 /** This module contains all the functionality and operations for using and manipulating references.
   *
@@ -78,7 +80,213 @@ object state {
       *   that any changes to the reference may be reverted after the execution of the parser:
       *   this may be on the parsers success, but it could also involve the parsers failure.
       */
-    type Ref[A] = parsley.registers.Reg[A] @nowarn
+    class Ref[A] private [parsley] {
+        /** This combinator injects the value stored in this reference into a parser.
+          *
+          * Allows for the value stored in this reference to be purely injected into
+          * the parsing context. No input is consumed in this process, and it cannot fail.
+          *
+          * @example Get-Get Law: {{{
+          * r.get *> r.get == r.get
+          * r.get <~> r.get == r.get.map(x => (x, x))
+          * }}}
+          *
+          * @return a parser that returns the value stored in this reference.
+          * @since 3.2.0
+          * @group getters
+          */
+        def get: Parsley[A] = new Parsley(new singletons.Get(this))
+        /** This combinator injects the value stored in this reference into a parser after applying a function to it.
+          *
+          * Allows for the value stored in this reference to be purely injected into
+          * the parsing context but the function `f` is applied first. No input is
+          * consumed in this process, and it cannot fail.
+          *
+          * @param f the function used to transform the value in this reference.
+          * @tparam B the desired result type.
+          * @return the value stored in this reference applied to `f`.
+          * @since 3.2.0
+          * @group getters
+          */
+        def gets[B](f: A => B): Parsley[B] = this.gets(pure(f))
+        /** This combinator injects the value stored in this reference into a parser after applying a function obtained from a parser to it.
+          *
+          * First, `pf` is parsed, producing the function `f` on success. Then,
+          * the value stored in this reference `x` is applied to the function `f`.
+          * The combinator returns `f(x)`. Only `pf` is allowed to consume input.
+          * If `pf` fails, the combinator fails, otherwise it will succeed.
+          *
+          * @param pf the parser that produces the function used to transform the value in this reference.
+          * @tparam B the desired result type.
+          * @return the value stored in this reference applied to a function generated from `pf`.
+          * @since 3.2.0
+          * @group getters
+          */
+        def gets[B](pf: Parsley[A => B]): Parsley[B] = pf <*> this.get
+        /** This combinator stores a new value into this reference.
+          *
+          * Without any other effect, the value `x` will be placed into this reference.
+          *
+          * @example Set-Get Law: {{{
+          * r.set(x) *> r.get == r.set(x).as(x)
+          * }}}
+          *
+          * @example Set-Set Law: {{{
+          * r.set(x) *> r.set(y) == r.set(y)
+          * }}}
+          *
+          * @param x the value to place in the reference.
+          * @since 4.5.0
+          * @group setters
+          */
+        def set(x: A): Parsley[Unit] = this.set(pure(x))
+        /** This combinator stores a new value into this reference.
+          *
+          * First, parse `p` to obtain its result `x`. Then store `x` into
+          * this reference without any further effect. If `p` fails this
+          * combinator fails.
+          *
+          * @example Get-Set Law: {{{
+          * r.set(r.get) == unit
+          * }}}
+          *
+          * @example Set-Set Law: {{{
+          * // only when `q` does not inspect the value of `r`!
+          * r.set(p) *> r.set(q) == p *> r.set(q)
+          * }}}
+          *
+          * @param p the parser that produces the value to store in the reference.
+          * @since 4.5.0
+          * @group setters
+          */
+        def set(p: Parsley[A]): Parsley[Unit] = new Parsley(new frontend.Put(this, p.internal))
+        /** This combinator stores a new value into this reference.
+          *
+          * First, parse `p` to obtain its result `x`. Then store `f(x)` into
+          * this reference without any further effect. If `p` fails this
+          * combinator fails.
+          *
+          * Equivalent to {{{
+          * this.set(p.map(f))
+          * }}}
+          *
+          * @param p the parser that produces the value to store in the reference.
+          * @param f a function which adapts the result of `p` so that it can fit into this reference.
+          * @since 4.5.0
+          * @group setters
+          */
+        def sets[B](p: Parsley[B], f: B => A): Parsley[Unit] = this.set(p.map(f))
+        /** This combinator modifies the value stored in this reference with a function.
+          *
+          * Without any other effect, get the value stored in this reference, `x`, and
+          * put back `f(x)`.
+          *
+          * Equivalent to {{{
+          * this.set(this.gets(f))
+          * }}}
+          *
+          * @param f the function used to modify this reference's value.
+          * @since 4.5.0
+          * @group mod
+          */
+        def update(f: A => A): Parsley[Unit] = new Parsley(new singletons.Modify(this, f))
+        /** This combinator modifies the value stored in this reference with a function.
+          *
+          * First, parse `pf` to obtain its result `f`. Then get the value stored in
+          * this reference, `x`, and put back `f(x)`. If `p` fails this combinator fails.
+          *
+          * Equivalent to {{{
+          * this.set(this.gets(pf))
+          * }}}
+          *
+          * @param pf  the parser that produces the function used to transform the value in this reference.
+          * @since 4.5.0
+          * @group mod
+          */
+        def update(pf: Parsley[A => A]): Parsley[Unit] = this.set(this.gets(pf))
+        /** This combinator changed the value stored in this reference for the duration of a given parser, resetting it afterwards.
+          *
+          * First get the current value in this reference `x,,old,,`, then place `x` into this reference
+          * without any further effect. Then, parse `p`, producing result `y` on success. Finally,
+          * put `x,,old,,` back into this reference and return `y`. If `p` fails, the whole combinator fails and
+          * the state is '''not restored'''.
+          *
+          * @example Set-Set Law: {{{
+          * r.set(x) *> r.setDuring(y)(p) == r.set(y) *> p <* r.set(x)
+          * }}}
+          *
+          * @param x the value to place into this reference.
+          * @param p the parser to execute with the adjusted state.
+          * @return the parser that performs `p` with the modified state `x`.
+          * @since 4.5.0
+          * @group local
+          */
+        def setDuring[B](x: A)(p: Parsley[B]): Parsley[B] = this.setDuring(pure(x))(p)
+        /** This combinator changed the value stored in this reference for the duration of a given parser, resetting it afterwards.
+          *
+          * First get the current value in this reference `x,,old,,`, then parse `p` to get the result `x`, placing it into this reference
+          * without any further effect. Then, parse `q`, producing result `y` on success. Finally,
+          * put `x,,old,,` back into this reference and return `y`. If `p` or `q` fail, the whole combinator fails and
+          * the state is '''not restored'''.
+          *
+          * @param p the parser whose return value is placed in this reference.
+          * @param q the parser to execute with the adjusted state.
+          * @return the parser that performs `q` with the modified state.
+          * @since 4.5.0
+          * @group local
+          */
+        def setDuring[B](p: Parsley[A])(q: =>Parsley[B]): Parsley[B] = new Parsley(new frontend.Local(this, p.internal, q.internal))
+        /** This combinator changed the value stored in this reference for the duration of a given parser, resetting it afterwards.
+          *
+          * First get the current value in this reference `x,,old,,`, then place `f(x,,old,,)` into this reference
+          * without any further effect. Then, parse `p`, producing result `y` on success. Finally,
+          * put `x,,old,,` back into this reference and return `y`. If `p` fails, the whole combinator fails and
+          * the state is '''not restored'''.
+          *
+          * @example Set-Set Law and Set-Get Law: {{{
+          * r.set(x) *> r.updateDuring(f)(p) == r.set(f(x)) *> p <* r.set(x)
+          * }}}
+          *
+          * @param f the function used to modify the value in this reference.
+          * @param p the parser to execute with the adjusted state.
+          * @return the parser that performs `p` with the modified state.
+          * @since 4.5.0
+          * @group local
+          */
+        def updateDuring[B](f: A => A)(p: Parsley[B]): Parsley[B] = this.setDuring(this.gets(f))(p)
+        /** This combinator rolls-back any changes to this reference made by a given parser if it fails.
+          *
+          * First get the current value in this reference `x,,old,,`. Then parse `p`, if it succeeds,
+          * producing `y`, then `y` is returned and this reference retains its value post-`p`. Otherwise,
+          * if `p` failed '''without consuming input''', `x,,old,,` is placed back into this reference
+          * and this combinator fails.
+          *
+          * This can be used in conjunction with local to make an ''almost'' unconditional state restore: {{{
+          * // `r`'s state is always rolled back after `p` unless it fails having consumed input.
+          * r.rollback(r.local(x)(p))
+          * }}}
+          *
+          * @param p the parser to perform.
+          * @return the result of the parser `p`, if any.
+          * @since 3.2.0
+          * @group local
+          */
+        def rollback[B](p: Parsley[B]): Parsley[B] = this.get.persist { x =>
+            p <|> (this.set(x) *> empty)
+        }
+
+        private [this] var _v: Int = -1
+        private [parsley] def addr: Int = {
+            if (!allocated) throw new UnfilledReferenceException // scalastyle:ignore throw
+            _v
+        }
+        private [parsley] def allocated: Boolean = _v != -1
+        private [parsley] def allocate(v: Int): Unit = {
+            assert(!allocated)
+            this._v = v
+        }
+        //override def toString: String = s"Reg(${if (allocated) addr else "unallocated"})"
+    }
 
     /** This object allows for the construction of a reference via its `make` function.
       * @group ref
@@ -87,16 +295,15 @@ object state {
         /** This function creates a new (global) reference of a given type.
           *
           * The reference created by this function is not allocated to any specific parser until it has been
-          * used by a parser. It should not be used with multiple different parsers.
+          * used by a parser. It should not be used with multiple different parsers: while this ''may'' work,
+          * there is a chance that two such references collide in allocation, which is undefined behaviour.
           *
           * @tparam A the type to be contained in this reference during runtime
           * @return a new reference which can contain the given type.
-          * @note references created in this manner ''must'' be initialised in the top-level parser and not
-          *       inside a `flatMap`, as this may make them corrupt other references. They should be used with
-          *       caution. It is recommended to use `makeRef` and `fillRef` where possible.
+          * @note They should be used with caution. It is recommended to use `makeRef` and `fillRef` where possible.
           * @since 2.2.0
           */
-        def make[A]: Ref[A] = new parsley.registers.Reg: @nowarn
+        def make[A]: Ref[A] = new Ref
     }
 
     /** This class, when in scope, enables the use of combinators directly on parsers
@@ -200,7 +407,9 @@ object state {
         init.fillRef { ref =>
           lazy val _cond = ref.gets(cond)
           lazy val _step = ref.update(step)
-          whenS(_cond, whileS(body(ref.get) *> _step *> _cond))
+          whenS(_cond) {
+            whileS(body(ref.get) *> _step *> _cond)
+          }
         }
     }
 
@@ -233,10 +442,14 @@ object state {
       * @group comb
       */
     def forYieldP_[A, B](init: Parsley[A], cond: =>Parsley[A => Boolean], step: =>Parsley[A => A])(body: Parsley[A] => Parsley[B]): Parsley[List[B]] = {
-        fresh(mutable.ListBuffer.empty[B]).persist { acc =>
+        forYieldPGen_(init, cond, step)(body, List)
+    }
+    private [parsley] def forYieldPGen_[A, B, C](init: Parsley[A], cond: =>Parsley[A => Boolean], step: =>Parsley[A => A])
+                                                (body: Parsley[A] => Parsley[B], factory: Factory[B, C]): Parsley[C] = {
+        fresh(factory.newBuilder).persist { acc =>
             forP_(init, cond, step) { x =>
                 (acc, body(x)).zipped(_ += _).impure // we don't want this optimised out, it's a mutable operation in a resultless context
-            } ~> acc.map(_.toList)
+            } ~> acc.map(_.result())
         }
     }
 
@@ -302,10 +515,10 @@ object state {
       * @group comb
       */
     def forYieldP[A, B](init: Parsley[A], cond: =>Parsley[A => Boolean], step: =>Parsley[A => A])(body: =>Parsley[B]): Parsley[List[B]] = {
-        fresh(mutable.ListBuffer.empty[B]).persist { acc =>
-            forP(init, cond, step) {
-                (acc, body).zipped(_ += _).impure
-            } ~> acc.map(_.toList)
-        }
+        forYieldPGen(init, cond, step)(body, List)
+    }
+    private [parsley] def forYieldPGen[A, B, C](init: Parsley[A], cond: =>Parsley[A => Boolean], step: =>Parsley[A => A])
+                                               (body: =>Parsley[B], factory: Factory[B, C]): Parsley[C] = {
+        forYieldPGen_(init, cond, step)(_ => body, factory)
     }
 }

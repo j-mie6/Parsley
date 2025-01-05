@@ -75,8 +75,8 @@ private [internal] final class TokenComment private (
     endOfSingleComment: Iterable[ExpectDesc],
     ) extends CommentLexer {
     def this(desc: SpaceDesc, errConfig: ErrorConfig) = {
-        this(desc.commentStart, desc.commentEnd, desc.commentLine, desc.nestedComments, desc.commentLineAllowsEOF,
-             errConfig.labelSpaceEndOfMultiComment.asExpectItems(desc.commentEnd),
+        this(desc.multiLineCommentStart, desc.multiLineCommentEnd, desc.lineCommentStart, desc.multiLineNestedComments, desc.lineCommentAllowsEOF,
+             errConfig.labelSpaceEndOfMultiComment.asExpectItems(desc.multiLineCommentEnd),
              errConfig.labelSpaceEndOfLineComment.asExpectDescs("end of line"))
     }
     private [this] final val openingSize = Math.max(start.codePointCount(0, start.length), line.codePointCount(0, line.length))
@@ -173,8 +173,8 @@ private [internal] final class TokenWhiteSpace private (
     protected [this] val endOfMultiComment: Iterable[ExpectItem],
     protected [this] val endOfSingleComment: Iterable[ExpectDesc]) extends WhiteSpaceLike {
     def this(ws: Char => Boolean, desc: SpaceDesc, errConfig: ErrorConfig) = {
-        this(ws, desc.commentStart, desc.commentEnd, desc.commentLine, desc.nestedComments, desc.commentLineAllowsEOF,
-             errConfig.labelSpaceEndOfMultiComment.asExpectItems(desc.commentEnd),
+        this(ws, desc.multiLineCommentStart, desc.multiLineCommentEnd, desc.lineCommentStart, desc.multiLineNestedComments, desc.lineCommentAllowsEOF,
+             errConfig.labelSpaceEndOfMultiComment.asExpectItems(desc.multiLineCommentEnd),
              errConfig.labelSpaceEndOfLineComment.asExpectDescs("end of line"))
     }
     override def spaces(ctx: Context): Unit = {
@@ -196,8 +196,8 @@ private [internal] final class TokenSkipComments private (
     protected [this] val endOfMultiComment: Iterable[ExpectItem],
     protected [this] val endOfSingleComment: Iterable[ExpectDesc]) extends WhiteSpaceLike {
     def this(desc: SpaceDesc, errConfig: ErrorConfig) = {
-        this(desc.commentStart, desc.commentEnd, desc.commentLine, desc.nestedComments, desc.commentLineAllowsEOF,
-             errConfig.labelSpaceEndOfMultiComment.asExpectItems(desc.commentEnd),
+        this(desc.multiLineCommentStart, desc.multiLineCommentEnd, desc.lineCommentStart, desc.multiLineNestedComments, desc.lineCommentAllowsEOF,
+             errConfig.labelSpaceEndOfMultiComment.asExpectItems(desc.multiLineCommentEnd),
              errConfig.labelSpaceEndOfLineComment.asExpectDescs("end of line"))
     }
     override def spaces(ctx: Context): Unit = ()

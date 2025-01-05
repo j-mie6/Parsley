@@ -7,7 +7,7 @@ package parsley
 
 import Predef.{ArrowAssoc => _, _}
 
-import parsley.combinator.{exactly => repeat, eof => _, many => _, some => _, _}
+import parsley.combinator.{exactly => repeat, _}
 import parsley.character.item
 import parsley.Parsley._
 import parsley.state.{forYieldP, forYieldP_, Ref}
@@ -32,12 +32,8 @@ class CombinatorTests extends ParsleyTest {
         atomicChoice("ac", "aba", "abc").parse("abc") should be (Success("abc"))
     }
 
-    "exactly" should "be pure(Nil) for n <= 0" in {
-        repeat(0, 'a').parse("a") should be (Success(Nil))
-        repeat(-1, 'a').parse("a") should be (Success(Nil))
-    }
-    it should "parse n times for n > 0" in {
-        for (n <- 0 to 100) repeat(n, 'a').parse("a"*n) should be (Success(("a" * n).toList))
+    "exactly" should "parse n times for n > 0" in {
+        for (n <- 1 to 100) repeat(n, 'a').parse("a"*n) should be (Success(("a" * n).toList))
     }
     it must "fail if n inputs are not present" in {
         repeat(2, 'a').parse("a") shouldBe a [Failure[_]]

@@ -22,20 +22,20 @@ class TokenExtractorTests extends ParsleyTest {
         singleChar.unexpectedToken("😀😀😀", 1, false) shouldBe Token.Raw("😀")
     }
     it should "deal with whitespace characters by naming them" in {
-        singleChar.unexpectedToken(" ", 1, true) shouldBe Token.Named("space", TokenSpan.Width(1))
-        singleChar.unexpectedToken("\n", 1, true) shouldBe Token.Named("newline", TokenSpan.Width(1))
-        singleChar.unexpectedToken("\t", 1, true) shouldBe Token.Named("tab", TokenSpan.Width(1))
-        singleChar.unexpectedToken("\r", 1, true) shouldBe Token.Named("carriage return", TokenSpan.Width(1))
-        singleChar.unexpectedToken("\f", 1, true) shouldBe Token.Named("whitespace character", TokenSpan.Width(1))
+        singleChar.unexpectedToken(" ", 1, true) shouldBe Token.Named("space", 1)
+        singleChar.unexpectedToken("\n", 1, true) shouldBe Token.Named("newline", 1)
+        singleChar.unexpectedToken("\t", 1, true) shouldBe Token.Named("tab", 1)
+        singleChar.unexpectedToken("\r", 1, true) shouldBe Token.Named("carriage return", 1)
+        singleChar.unexpectedToken("\f", 1, true) shouldBe Token.Named("whitespace character", 1)
     }
     it should "refuse to print control characters" in {
-        singleChar.unexpectedToken("\u0000", 1, true) shouldBe Token.Named("non-printable character (\\u0000)", TokenSpan.Width(1))
-        singleChar.unexpectedToken("\u0001", 1, true) shouldBe Token.Named("non-printable character (\\u0001)", TokenSpan.Width(1))
-        singleChar.unexpectedToken("\ud83d", 1, true) shouldBe Token.Named("non-printable character (\\ud83d)", TokenSpan.Width(1))
+        singleChar.unexpectedToken("\u0000", 1, true) shouldBe Token.Named("non-printable character (\\u0000)", 1)
+        singleChar.unexpectedToken("\u0001", 1, true) shouldBe Token.Named("non-printable character (\\u0001)", 1)
+        singleChar.unexpectedToken("\ud83d", 1, true) shouldBe Token.Named("non-printable character (\\ud83d)", 1)
     }
     it should "refuse to print non-printable supplementary characters" in {
-        singleChar.unexpectedToken(Character.toChars(0x0f0000), 1, true) shouldBe Token.Named("non-printable codepoint (\\udb80\\udc00, or 0x0f0000)", TokenSpan.Width(1))
-        singleChar.unexpectedToken(Character.toChars(0x10ffff), 1, true) shouldBe Token.Named("non-printable codepoint (\\udbff\\udfff, or 0x10ffff)", TokenSpan.Width(1))
+        singleChar.unexpectedToken(Character.toChars(0x0f0000), 1, true) shouldBe Token.Named("non-printable codepoint (\\udb80\\udc00, or 0x0f0000)", 1)
+        singleChar.unexpectedToken(Character.toChars(0x10ffff), 1, true) shouldBe Token.Named("non-printable codepoint (\\udbff\\udfff, or 0x10ffff)", 1)
     }
 
     val matchParserDemand = new TestErrorBuilder with MatchParserDemand
@@ -51,20 +51,20 @@ class TokenExtractorTests extends ParsleyTest {
         matchParserDemand.unexpectedToken("😀😀😀", 2, false) shouldBe Token.Raw("😀😀")
     }
     it should "deal with whitespace characters by naming them" in {
-        matchParserDemand.unexpectedToken(" aa", 2, true) shouldBe Token.Named("space", TokenSpan.Width(1))
-        matchParserDemand.unexpectedToken("\naa", 2, true) shouldBe Token.Named("newline", TokenSpan.Width(1))
-        matchParserDemand.unexpectedToken("\taa".toList, 2, true) shouldBe Token.Named("tab", TokenSpan.Width(1))
-        matchParserDemand.unexpectedToken("\raa", 3, true) shouldBe Token.Named("carriage return", TokenSpan.Width(1))
-        matchParserDemand.unexpectedToken("\faa", 1, true) shouldBe Token.Named("whitespace character", TokenSpan.Width(1))
+        matchParserDemand.unexpectedToken(" aa", 2, true) shouldBe Token.Named("space", 1)
+        matchParserDemand.unexpectedToken("\naa", 2, true) shouldBe Token.Named("newline", 1)
+        matchParserDemand.unexpectedToken("\taa".toList, 2, true) shouldBe Token.Named("tab", 1)
+        matchParserDemand.unexpectedToken("\raa", 3, true) shouldBe Token.Named("carriage return", 1)
+        matchParserDemand.unexpectedToken("\faa", 1, true) shouldBe Token.Named("whitespace character", 1)
     }
     it should "refuse to print control characters" in {
-        matchParserDemand.unexpectedToken("\u0000aaa", 3, true) shouldBe Token.Named("non-printable character (\\u0000)", TokenSpan.Width(1))
-        matchParserDemand.unexpectedToken("\u0001aaa", 3, true) shouldBe Token.Named("non-printable character (\\u0001)", TokenSpan.Width(1))
-        matchParserDemand.unexpectedToken("\ud83daaa".toList, 2, true) shouldBe Token.Named("non-printable character (\\ud83d)", TokenSpan.Width(1))
+        matchParserDemand.unexpectedToken("\u0000aaa", 3, true) shouldBe Token.Named("non-printable character (\\u0000)", 1)
+        matchParserDemand.unexpectedToken("\u0001aaa", 3, true) shouldBe Token.Named("non-printable character (\\u0001)", 1)
+        matchParserDemand.unexpectedToken("\ud83daaa".toList, 2, true) shouldBe Token.Named("non-printable character (\\ud83d)", 1)
     }
     it should "refuse to print non-printable supplementary characters" in {
-        matchParserDemand.unexpectedToken(Character.toChars(0x0f0000), 1, true) shouldBe Token.Named("non-printable codepoint (\\udb80\\udc00, or 0x0f0000)", TokenSpan.Width(1))
-        matchParserDemand.unexpectedToken(Character.toChars(0x10ffff), 1, true) shouldBe Token.Named("non-printable codepoint (\\udbff\\udfff, or 0x10ffff)", TokenSpan.Width(1))
+        matchParserDemand.unexpectedToken(Character.toChars(0x0f0000), 1, true) shouldBe Token.Named("non-printable codepoint (\\udb80\\udc00, or 0x0f0000)", 1)
+        matchParserDemand.unexpectedToken(Character.toChars(0x10ffff), 1, true) shouldBe Token.Named("non-printable codepoint (\\udbff\\udfff, or 0x10ffff)", 1)
     }
 
     val tillNextWhitespaceTrimmed = new TestErrorBuilder with TillNextWhitespace {
@@ -94,30 +94,30 @@ class TokenExtractorTests extends ParsleyTest {
         tillNextWhitespaceRaw.unexpectedToken("😀😀 😀", 1, false) shouldBe Token.Raw("😀😀")
     }
     it should "deal with whitespace characters by naming them" in {
-        tillNextWhitespaceTrimmed.unexpectedToken(" aa", 2, true) shouldBe Token.Named("space", TokenSpan.Width(1))
-        tillNextWhitespaceTrimmed.unexpectedToken("\naa", 2, true) shouldBe Token.Named("newline", TokenSpan.Width(1))
-        tillNextWhitespaceTrimmed.unexpectedToken("\taa", 2, true) shouldBe Token.Named("tab", TokenSpan.Width(1))
-        tillNextWhitespaceTrimmed.unexpectedToken("\raa", 3, true) shouldBe Token.Named("carriage return", TokenSpan.Width(1))
-        tillNextWhitespaceTrimmed.unexpectedToken("\faa".toList, 1, true) shouldBe Token.Named("whitespace character", TokenSpan.Width(1))
-        tillNextWhitespaceRaw.unexpectedToken(" aa", 2, true) shouldBe Token.Named("space", TokenSpan.Width(1))
-        tillNextWhitespaceRaw.unexpectedToken("\naa", 2, true) shouldBe Token.Named("newline", TokenSpan.Width(1))
-        tillNextWhitespaceRaw.unexpectedToken("\taa".toList, 2, true) shouldBe Token.Named("tab", TokenSpan.Width(1))
-        tillNextWhitespaceRaw.unexpectedToken("\raa", 3, true) shouldBe Token.Named("carriage return", TokenSpan.Width(1))
-        tillNextWhitespaceRaw.unexpectedToken("\faa", 1, true) shouldBe Token.Named("whitespace character", TokenSpan.Width(1))
+        tillNextWhitespaceTrimmed.unexpectedToken(" aa", 2, true) shouldBe Token.Named("space", 1)
+        tillNextWhitespaceTrimmed.unexpectedToken("\naa", 2, true) shouldBe Token.Named("newline", 1)
+        tillNextWhitespaceTrimmed.unexpectedToken("\taa", 2, true) shouldBe Token.Named("tab", 1)
+        tillNextWhitespaceTrimmed.unexpectedToken("\raa", 3, true) shouldBe Token.Named("carriage return", 1)
+        tillNextWhitespaceTrimmed.unexpectedToken("\faa".toList, 1, true) shouldBe Token.Named("whitespace character", 1)
+        tillNextWhitespaceRaw.unexpectedToken(" aa", 2, true) shouldBe Token.Named("space", 1)
+        tillNextWhitespaceRaw.unexpectedToken("\naa", 2, true) shouldBe Token.Named("newline", 1)
+        tillNextWhitespaceRaw.unexpectedToken("\taa".toList, 2, true) shouldBe Token.Named("tab", 1)
+        tillNextWhitespaceRaw.unexpectedToken("\raa", 3, true) shouldBe Token.Named("carriage return", 1)
+        tillNextWhitespaceRaw.unexpectedToken("\faa", 1, true) shouldBe Token.Named("whitespace character", 1)
     }
     it should "refuse to print control characters" in {
-        tillNextWhitespaceTrimmed.unexpectedToken("\u0000aaa", 3, true) shouldBe Token.Named("non-printable character (\\u0000)", TokenSpan.Width(1))
-        tillNextWhitespaceTrimmed.unexpectedToken("\u0001aaa", 3, true) shouldBe Token.Named("non-printable character (\\u0001)", TokenSpan.Width(1))
-        tillNextWhitespaceTrimmed.unexpectedToken("\ud83daaa", 2, true) shouldBe Token.Named("non-printable character (\\ud83d)", TokenSpan.Width(1))
-        tillNextWhitespaceRaw.unexpectedToken("\u0000aaa", 3, true) shouldBe Token.Named("non-printable character (\\u0000)", TokenSpan.Width(1))
-        tillNextWhitespaceRaw.unexpectedToken("\u0001aaa", 3, true) shouldBe Token.Named("non-printable character (\\u0001)", TokenSpan.Width(1))
-        tillNextWhitespaceRaw.unexpectedToken("\ud83daaa", 2, true) shouldBe Token.Named("non-printable character (\\ud83d)", TokenSpan.Width(1))
+        tillNextWhitespaceTrimmed.unexpectedToken("\u0000aaa", 3, true) shouldBe Token.Named("non-printable character (\\u0000)", 1)
+        tillNextWhitespaceTrimmed.unexpectedToken("\u0001aaa", 3, true) shouldBe Token.Named("non-printable character (\\u0001)", 1)
+        tillNextWhitespaceTrimmed.unexpectedToken("\ud83daaa", 2, true) shouldBe Token.Named("non-printable character (\\ud83d)", 1)
+        tillNextWhitespaceRaw.unexpectedToken("\u0000aaa", 3, true) shouldBe Token.Named("non-printable character (\\u0000)", 1)
+        tillNextWhitespaceRaw.unexpectedToken("\u0001aaa", 3, true) shouldBe Token.Named("non-printable character (\\u0001)", 1)
+        tillNextWhitespaceRaw.unexpectedToken("\ud83daaa", 2, true) shouldBe Token.Named("non-printable character (\\ud83d)", 1)
     }
     it should "refuse to print non-printable supplementary characters" in {
-        tillNextWhitespaceTrimmed.unexpectedToken(Character.toChars(0x0f0000), 1, true) shouldBe Token.Named("non-printable codepoint (\\udb80\\udc00, or 0x0f0000)", TokenSpan.Width(1))
-        tillNextWhitespaceTrimmed.unexpectedToken(Character.toChars(0x10ffff), 1, true) shouldBe Token.Named("non-printable codepoint (\\udbff\\udfff, or 0x10ffff)", TokenSpan.Width(1))
-        tillNextWhitespaceRaw.unexpectedToken(Character.toChars(0x0f0000), 1, true) shouldBe Token.Named("non-printable codepoint (\\udb80\\udc00, or 0x0f0000)", TokenSpan.Width(1))
-        tillNextWhitespaceRaw.unexpectedToken(Character.toChars(0x10ffff), 1, true) shouldBe Token.Named("non-printable codepoint (\\udbff\\udfff, or 0x10ffff)", TokenSpan.Width(1))
+        tillNextWhitespaceTrimmed.unexpectedToken(Character.toChars(0x0f0000), 1, true) shouldBe Token.Named("non-printable codepoint (\\udb80\\udc00, or 0x0f0000)", 1)
+        tillNextWhitespaceTrimmed.unexpectedToken(Character.toChars(0x10ffff), 1, true) shouldBe Token.Named("non-printable codepoint (\\udbff\\udfff, or 0x10ffff)", 1)
+        tillNextWhitespaceRaw.unexpectedToken(Character.toChars(0x0f0000), 1, true) shouldBe Token.Named("non-printable codepoint (\\udb80\\udc00, or 0x0f0000)", 1)
+        tillNextWhitespaceRaw.unexpectedToken(Character.toChars(0x10ffff), 1, true) shouldBe Token.Named("non-printable codepoint (\\udbff\\udfff, or 0x10ffff)", 1)
     }
 
     val lexToken = new TestErrorBuilder with LexToken {
@@ -148,15 +148,15 @@ class TokenExtractorTests extends ParsleyTest {
         lexToken.unexpectedToken(";.,", 3, true) shouldBe Token.Raw(";")
     }
     it should "parse tokens when possible" in {
-        lexToken.unexpectedToken("123", 1, false) shouldBe Token.Named("number", TokenSpan.Spanning(0, 3))
-        lexToken.unexpectedToken("\"hello\nworld!\"", 1, false) shouldBe Token.Named("string", TokenSpan.Spanning(1, 7))
-        lexToken.unexpectedToken("whi", 1, false) shouldBe Token.Named("keyword whi", TokenSpan.Spanning(0, 3))
+        lexToken.unexpectedToken("123", 1, false) shouldBe Token.Named("number", 3)
+        lexToken.unexpectedToken("\"hello\nworld!\"", 1, false) shouldBe Token.Named("string", 14)
+        lexToken.unexpectedToken("whi", 1, false) shouldBe Token.Named("keyword whi", 3)
         // This one loses out to the earlier identifier token!
-        lexToken.unexpectedToken("for", 1, false) shouldBe Token.Named("identifier", TokenSpan.Spanning(0, 3))
-        lexToken.unexpectedToken(" for", 1, false) shouldBe Token.Named("whitespace", TokenSpan.Spanning(0, 1))
+        lexToken.unexpectedToken("for", 1, false) shouldBe Token.Named("identifier", 3)
+        lexToken.unexpectedToken(" for", 1, false) shouldBe Token.Named("whitespace", 1)
     }
     it should "always pick the longest token" in {
-        lexToken.unexpectedToken("while ", 1, false) shouldBe Token.Named("keyword while", TokenSpan.Spanning(0, 5))
-        lexToken.unexpectedToken("whiled ", 1, false) shouldBe Token.Named("identifier", TokenSpan.Spanning(0, 6))
+        lexToken.unexpectedToken("while ", 1, false) shouldBe Token.Named("keyword while", 5)
+        lexToken.unexpectedToken("whiled ", 1, false) shouldBe Token.Named("identifier", 6)
     }
 }

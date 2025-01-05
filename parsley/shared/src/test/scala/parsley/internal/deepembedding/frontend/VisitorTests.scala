@@ -15,13 +15,13 @@ import parsley.internal.deepembedding.{ContOps, Sign}
 import parsley.internal.deepembedding.backend.StrictParsley
 import parsley.internal.deepembedding.singletons.*
 import parsley.internal.deepembedding.singletons.token.*
-import parsley.internal.errors.{CaretWidth, ExpectDesc, ExpectItem, FlexibleCaret}
-import parsley.internal.machine.errors.DefuncError
+import parsley.internal.errors.{CaretWidth, FlexibleCaret}
 import parsley.state.Ref
 import parsley.token.descriptions.SpaceDesc
-import parsley.token.descriptions.numeric.PlusSignPresence
-import parsley.token.errors.{ErrorConfig, FilterConfig, LabelConfig, LabelWithExplainConfig, SpecialisedFilterConfig}
-import parsley.token.predicate.Basic
+import parsley.token.descriptions.PlusSignPresence
+import parsley.token.errors.{ErrorConfig, BasicFilter, LabelConfig, SpecializedFilterConfig}
+import parsley.token.Basic
+import parsley.token.errors.NotConfigured
 
 class VisitorTests extends ParsleyTest {
     sealed trait ConstUnit[+A]
@@ -46,77 +46,30 @@ class VisitorTests extends ParsleyTest {
             override def visitUnknown[A](self: LazyParsley[A], context: Unit): ConstUnit[A] = CUnit
         }
 
-    private def dontExecute(): Nothing =
-        fail("Should not execute.")
+    private def dontExecute(): Nothing = fail("Should not execute.")
 
-    private val dummyParser: LazyParsley[Nothing] =
-        new LazyParsley[Nothing] {
-            override protected def findLetsAux[M[_, +_] : ContOps, R](seen: Set[LazyParsley[_]])(implicit state: LetFinderState): M[R, Unit] =
-                dontExecute()
-
-            override protected def preprocess[M[_, +_] : ContOps, R, A_ >: Nothing](implicit lets: LetMap): M[R, StrictParsley[A_]] =
-                dontExecute()
-
-            override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[Nothing] =
-                dontExecute()
-
-            override private[parsley] def prettyName: String =
-                dontExecute()
-        }
-
-
-    private val dummyLabelConfig: LabelConfig = new LabelConfig {
-        override private[parsley] def orElse(other: LabelConfig): LabelConfig =
-            dontExecute()
-
-        override private[parsley] def orElse(other: LabelWithExplainConfig): LabelWithExplainConfig =
-            dontExecute()
-
-        override private[parsley] def asExpectDescs: Iterable[ExpectDesc] =
-            dontExecute()
-
-        override private[parsley] def asExpectDescs(otherwise: String): Iterable[ExpectDesc] =
-            dontExecute()
-
-        override private[parsley] def asExpectItems(raw: String): Iterable[ExpectItem] =
-            dontExecute()
-
-        override private[parsley] def apply[A](p: Parsley[A]): Parsley[A] =
-            dontExecute()
-
-        override private[parsley] def asReason: Option[String] = None
+    private val dummyParser: LazyParsley[Nothing] = new LazyParsley[Nothing] {
+        override protected def findLetsAux[M[_, +_] : ContOps, R](seen: Set[LazyParsley[_]])(implicit state: LetFinderState): M[R, Unit] = dontExecute()
+        override protected def preprocess[M[_, +_] : ContOps, R, A_ >: Nothing](implicit lets: LetMap): M[R, StrictParsley[A_]] = dontExecute()
+        override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[Nothing] = dontExecute()
+        private [parsley] var debugName: String = "dummy"
     }
+
+    private val dummyLabelConfig: LabelConfig = NotConfigured
 
     private val dummyCaretWidth: CaretWidth = new FlexibleCaret(0)
 
     private val dummyErrorBuilder: ErrorBuilder[String] = new DefaultErrorBuilder {
-        override def unexpectedToken(cs: Iterable[Char], amountOfInputParserWanted: Int, lexicalError: Boolean): Token =
-            dontExecute()
+        override def unexpectedToken(cs: Iterable[Char], amountOfInputParserWanted: Int, lexicalError: Boolean): Token = dontExecute()
     }
 
-    private def dummySFConfig[A](): SpecialisedFilterConfig[A] = new SpecialisedFilterConfig[A] {
-        override private[parsley] def filter(p: Parsley[A])(f: A => Boolean): Parsley[A] =
-            dontExecute()
-
-        override private[parsley] def mkError(offset: Int, line: Int, col: Int, caretWidth: Int, x: A): DefuncError =
-            dontExecute()
-
-        override private[parsley] def injectLeft[B]: FilterConfig[Either[A, B]] =
-            dontExecute()
-
-        override private[parsley] def injectRight[B]: FilterConfig[Either[B, A]] =
-            dontExecute()
-
-        override private[parsley] def injectSnd[B]: FilterConfig[(B, A)] =
-            dontExecute()
-    }
+    private def dummySFConfig[A](): SpecializedFilterConfig[A] = new BasicFilter[A]
 
     implicit private class TestVisitorOps[A](p: LazyParsley[A]) {
         def testV: Assertion = p.visit(testVisitor, ()) shouldBe CUnit
     }
 
-    private def dummyRef(): Ref[Unit] =
-        Ref.make[Unit]
+    private def dummyRef(): Ref[Unit] = Ref.make[Unit]
 
     def dontEval: Nothing = fail("Laziness was not maintained.")
     val crash = new PartialFunction[Any, Nothing] {
@@ -137,9 +90,9 @@ class VisitorTests extends ParsleyTest {
         new *>(dummyParser, dontEval).testV
         new <*(dummyParser, dontEval).testV
         new ChainPost(dummyParser, dontEval).testV
-        new Chainl(dummyParser, dontEval, dontEval).testV
+        new Chainl(dummyParser, dontEval, dontEval, "dummy").testV
         new Chainr[Nothing, Nothing](dummyParser, dontEval, crash).testV
-        new SepEndBy1(dummyParser, dontEval).testV
+        new SepEndBy1(dummyParser, dontEval, null).testV
         new Filter[Any](dummyParser, _ => false, dontEval).testV
         new MapFilter[Any, Nothing](dummyParser, _ => None, dontEval).testV
     }
@@ -157,7 +110,7 @@ class VisitorTests extends ParsleyTest {
         new SkipComments(SpaceDesc.plain, new ErrorConfig).testV
         new Comment(SpaceDesc.plain, new ErrorConfig).testV
         new Sign(Sign.CombinedType, PlusSignPresence.Optional).testV
-        new NonSpecific("foo", identity[String], _ => true, _ => true, _ => false).testV
+        new NonSpecific("foo", identity[String], "foo", _ => true, _ => true, _ => false).testV
         new CharTok(' ', ' ', dummyLabelConfig).testV
         new SupplementaryCharTok(0, 0, dummyLabelConfig).testV
         new StringTok("bar", 4, dummyLabelConfig).testV
@@ -168,7 +121,7 @@ class VisitorTests extends ParsleyTest {
         new Fail(dummyCaretWidth).testV
         new Unexpected("qux", dummyCaretWidth).testV
         new VanillaGen(new errors.VanillaGen).testV
-        new SpecialisedGen[Any](new errors.SpecialisedGen[Any] {
+        new SpecializedGen[Any](new errors.SpecializedGen[Any] {
             def messages(x: Any) = Seq.empty
         }).testV
         new EscapeMapped(Trie.empty[Int], Set("quux")).testV
@@ -176,21 +129,21 @@ class VisitorTests extends ParsleyTest {
         new EscapeOneOfExactly(0, Nil, dummySFConfig[Int]()).testV
         new SoftKeyword("corge", Basic(_ => true), false, dummyLabelConfig, "grault").testV
         new SoftOperator("garply", Basic(_ => true), Trie.empty[Unit], dummyLabelConfig, "waldo").testV
-        new Attempt(dummyParser).testV
+        new Atomic(dummyParser).testV
         new Look(dummyParser).testV
         new NotFollowedBy(dummyParser).testV
         new Put(dummyRef(), dummyParser).testV
         new Debug(dummyParser, "fred", false, FullBreak, Seq.empty: @org.typelevel.scalaccompat.annotation.nowarn3).testV
         new DebugError(dummyParser, "plugh", false, dummyErrorBuilder).testV
-        new <|>(dummyParser, dummyParser).testV
+        new <|>(dummyParser, dummyParser, "dummy").testV
         new >>=[Nothing, Nothing](dummyParser, crash).testV
-        new Many(dummyParser).testV
+        new Many(dummyParser, null).testV
         new ChainPre(dummyParser, dummyParser).testV
         new Span(dummyParser).testV
         new Profile(dummyParser, "", null).testV
-        new ManyUntil(dummyParser).testV
+        new ManyUntil(dummyParser, null).testV
         new SkipManyUntil(dummyParser).testV
-        new ErrorLabel(dummyParser, Seq("bazola")).testV
+        new ErrorLabel(dummyParser, "test", Seq("bazola")).testV
         new ErrorHide(dummyParser).testV
         new ErrorExplain(dummyParser, "ztesch").testV
         new ErrorAmend(dummyParser, false).testV

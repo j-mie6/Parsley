@@ -135,11 +135,11 @@ object VanillaGen {
     }
 }
 
-/** An error generate for ''Specialised'' errors, which can tune the freeform messages of the error.
+/** An error generate for ''Specialized'' errors, which can tune the freeform messages of the error.
   *
   * @since 4.4.0
   */
-abstract class SpecialisedGen[-A] extends ErrorGen[A] {
+abstract class SpecializedGen[-A] extends ErrorGen[A] {
     /** What should the messages of the error message be based on the result the
       * offending parser produced?
       *
@@ -147,5 +147,5 @@ abstract class SpecialisedGen[-A] extends ErrorGen[A] {
       */
     def messages(x: A): Seq[String]
 
-    private [errors] override def internal: LazyParsley[((A, Int)) => Nothing] = new singletons.SpecialisedGen(this)
+    private [errors] override def internal: LazyParsley[((A, Int)) => Nothing] = new singletons.SpecializedGen(this)
 }

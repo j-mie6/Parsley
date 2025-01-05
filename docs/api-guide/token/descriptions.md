@@ -35,28 +35,27 @@ LexicalDesc *-- TextDesc
 
 TextDesc *-- EscapeDesc
 EscapeDesc *-- NumericEscape
-NumericEscape_Illegal --|> NumericEscape
-NumericEscape_Supported --|> NumericEscape
-NumericEscape_Supported *-- NumberOfDigits
-NumberOfDigits_AtMost --|> NumberOfDigits
-NumberOfDigits_Exactly --|> NumberOfDigits
-NumberOfDigits_Unbounded --|> NumberOfDigits
+`NumericEscape.Illegal` --|> NumericEscape
+`NumericEscape.Supported` --|> NumericEscape
+`NumericEscape.Supported` *-- NumberOfDigits
+`NumberOfDigits.AtMost` --|> NumberOfDigits
+`NumberOfDigits.Exactly` --|> NumberOfDigits
+`NumberOfDigits.Unbounded` --|> NumberOfDigits
 
 ExponentDesc --* NumericDesc
-ExponentDesc_Supported --|> ExponentDesc
-ExponentDesc_NoExponents --|> ExponentDesc
+`ExponentDesc.Supported` --|> ExponentDesc
+`ExponentDesc.NoExponents` --|> ExponentDesc
 NumericDesc *-- BreakCharDesc
-ExponentDesc_Supported *-- PlusSignPresence
+`ExponentDesc.Supported` *-- PlusSignPresence
 
-BreakCharDesc <|-- BreakCharDesc_Supported
-BreakCharDesc <|-- BreakCharDesc_NoBreakChar
+BreakCharDesc <|-- `BreakCharDesc.Supported`
+BreakCharDesc <|-- `BreakCharDesc.NoBreakChar`
 
-PlusSignPresence <|-- PlusSignPresence_Illegal
-PlusSignPresence <|-- PlusSignPresence_Optional
-PlusSignPresence <|-- PlusSignPrecense_Required
+PlusSignPresence <|-- `PlusSignPresence.Illegal`
+PlusSignPresence <|-- `PlusSignPresence.Optional`
+PlusSignPresence <|-- `PlusSignPrecense.Required`
 NumericDesc *-- PlusSignPresence
 ```
-*In the above diagram, an `_` represents a `.`*
 
 The types in the diagram that have alternative implements are as follows:
 

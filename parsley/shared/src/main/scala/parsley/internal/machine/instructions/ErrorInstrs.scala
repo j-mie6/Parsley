@@ -216,7 +216,7 @@ private [internal] final class VanillaGen[A](gen: parsley.errors.VanillaGen[A]) 
     // $COVERAGE-ON$
 }
 
-private [internal] final class SpecialisedGen[A](gen: parsley.errors.SpecialisedGen[A]) extends Instr {
+private [internal] final class SpecializedGen[A](gen: parsley.errors.SpecializedGen[A]) extends Instr {
     override def apply(ctx: Context): Unit = {
         ensureRegularInstruction(ctx)
         // stack will have an (A, Int) pair on it
@@ -225,6 +225,6 @@ private [internal] final class SpecialisedGen[A](gen: parsley.errors.Specialised
     }
 
     // $COVERAGE-OFF$
-    override def toString: String = "SpecialisedGen"
+    override def toString: String = "SpecializedGen"
     // $COVERAGE-ON$
 }

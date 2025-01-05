@@ -12,7 +12,7 @@ import parsley.Parsley.atomic
 
 import descriptions.{SpaceDesc, LexicalDesc}
 import parsley.character.{string, char}
-import parsley.exceptions.UnfilledRegisterException
+import parsley.exceptions.UnfilledReferenceException
 import parsley.VanillaError
 import parsley.Failure
 import parsley.TestError
@@ -22,8 +22,8 @@ class SpaceTests extends ParsleyTest {
     private def makeLexer(space: SpaceDesc) = new Lexer(LexicalDesc.plain.copy(spaceDesc = space))
     private def makeSpace(space: SpaceDesc) = makeLexer(space).space
 
-    val basicNoComments = SpaceDesc.plain.copy(space = predicate.Basic(Character.isWhitespace))
-    val unicodeNoComments = basicNoComments.copy(space = predicate.Unicode(Character.isWhitespace))
+    val basicNoComments = SpaceDesc.plain.copy(space = Basic(Character.isWhitespace(_)))
+    val unicodeNoComments = basicNoComments.copy(space = Unicode(Character.isWhitespace(_)))
 
     "whiteSpace" should "parse spaces when no comments are defined" in cases(makeSpace(basicNoComments).whiteSpace *> string("a")) (
         "a" -> Some("a"),
@@ -39,8 +39,8 @@ class SpaceTests extends ParsleyTest {
         "/**/ a" -> None,
     )
 
-    val basicLine = basicNoComments.copy(commentLine = "--")
-    val unicodeLine = unicodeNoComments.copy(commentLine = "--")
+    val basicLine = basicNoComments.copy(lineCommentStart = "--")
+    val unicodeLine = unicodeNoComments.copy(lineCommentStart = "--")
 
     it should "parse spaces and line comments when defined" in {
         cases(makeSpace(basicLine).whiteSpace *> string("a")) (
@@ -59,8 +59,8 @@ class SpaceTests extends ParsleyTest {
         )
     }
 
-    val basicMulti = basicNoComments.copy(commentStart = "/*", commentEnd = "*/")
-    val unicodeMulti = unicodeNoComments.copy(commentStart = "/*", commentEnd = "*/")
+    val basicMulti = basicNoComments.copy(multiLineCommentStart = "/*", multiLineCommentEnd = "*/")
+    val unicodeMulti = unicodeNoComments.copy(multiLineCommentStart = "/*", multiLineCommentEnd = "*/")
 
     it should "parse spaces and multi-line comment when defined" in {
         cases(makeSpace(basicMulti).whiteSpace *> string("a")) (
@@ -79,8 +79,8 @@ class SpaceTests extends ParsleyTest {
         )
     }
 
-    val basicMixed = basicNoComments.copy(commentLine = "#", commentStart = "##", commentEnd = "##")
-    val unicodeMixed = unicodeNoComments.copy(commentLine = "#", commentStart = "##", commentEnd = "##")
+    val basicMixed = basicNoComments.copy(lineCommentStart = "#", multiLineCommentStart = "##", multiLineCommentEnd = "##")
+    val unicodeMixed = unicodeNoComments.copy(lineCommentStart = "#", multiLineCommentStart = "##", multiLineCommentEnd = "##")
 
     it should "parse spaces and mixed comments when defined" in {
         cases(makeSpace(basicMixed).whiteSpace *> string("a")) (
@@ -101,8 +101,8 @@ class SpaceTests extends ParsleyTest {
         )
     }
 
-    val basicCommentsOnly = basicMixed.copy(space = predicate.NotRequired)
-    val unicodeCommentsOnly = unicodeMixed.copy(space = predicate.NotRequired)
+    val basicCommentsOnly = basicMixed.copy(space = NotRequired)
+    val unicodeCommentsOnly = unicodeMixed.copy(space = NotRequired)
 
     it should "be skipComments with no whitespace allowed" in {
         val basic = makeSpace(basicCommentsOnly)
@@ -111,10 +111,10 @@ class SpaceTests extends ParsleyTest {
         unicode.whiteSpace shouldBe unicode.skipComments
     }
 
-    val basicLineEOF = basicLine.copy(commentLineAllowsEOF = true)
-    val basicLineNoEOF = basicLine.copy(commentLineAllowsEOF = false)
-    val basicMixedEOF = basicMixed.copy(commentLineAllowsEOF = true)
-    val basicMixedNoEOF = basicMixed.copy(commentLineAllowsEOF = false)
+    val basicLineEOF = basicLine.copy(lineCommentAllowsEOF = true)
+    val basicLineNoEOF = basicLine.copy(lineCommentAllowsEOF = false)
+    val basicMixedEOF = basicMixed.copy(lineCommentAllowsEOF = true)
+    val basicMixedNoEOF = basicMixed.copy(lineCommentAllowsEOF = false)
 
     it should "allow for line comments to end in EOF" in {
         cases(makeSpace(basicLineEOF).whiteSpace)("--hello world" -> Some(()))
@@ -126,9 +126,9 @@ class SpaceTests extends ParsleyTest {
         cases(makeSpace(basicMixedNoEOF).whiteSpace)("--hello world" -> None)
     }
 
-    val basicMultiNested = basicMulti.copy(nestedComments = true)
+    val basicMultiNested = basicMulti.copy(multiLineNestedComments = true)
     // having the same start and end makes this... weird
-    val basicMixedNested = basicMixed.copy(nestedComments = true, commentStart = "#-", commentEnd = "-#")
+    val basicMixedNested = basicMixed.copy(multiLineNestedComments = true, multiLineCommentStart = "#-", multiLineCommentEnd = "-#")
 
     it should "parse nested comments when applicable" in {
         cases(makeSpace(basicMultiNested).whiteSpace) (
@@ -143,8 +143,8 @@ class SpaceTests extends ParsleyTest {
         )
     }
 
-    val basicMultiNonNested = basicMulti.copy(nestedComments = false)
-    val basicMixedNonNested = basicMulti.copy(nestedComments = false)
+    val basicMultiNonNested = basicMulti.copy(multiLineNestedComments = false)
+    val basicMixedNonNested = basicMulti.copy(multiLineNestedComments = false)
 
     it should "not parse nested comments when applicable" in {
         cases(makeSpace(basicMultiNonNested).whiteSpace) (
@@ -220,8 +220,8 @@ class SpaceTests extends ParsleyTest {
     }
 
     it should "not aggressively eat everything" in {
-        val lexer1 = makeSpace(basicCommentsOnly.copy(commentStart = "", commentEnd = ""))
-        val lexer2 = makeSpace(basicCommentsOnly.copy(commentLine = ""))
+        val lexer1 = makeSpace(basicCommentsOnly.copy(multiLineCommentStart = "", multiLineCommentEnd = ""))
+        val lexer2 = makeSpace(basicCommentsOnly.copy(lineCommentStart = ""))
         val lexer3 = makeSpace(unicodeCommentsOnly)
         (lexer1.skipComments *> char('a')).parse("a") shouldBe a [Success[_]]
         (lexer2.skipComments *> char('a')).parse("a") shouldBe a [Success[_]]
@@ -231,7 +231,7 @@ class SpaceTests extends ParsleyTest {
     val basicDependent = basicMixed.copy(whitespaceIsContextDependent = true)
 
     "context-dependent whitespace" must "be initialised" in {
-        a [UnfilledRegisterException] must be thrownBy {
+        a [UnfilledReferenceException] must be thrownBy {
             makeSpace(basicDependent).whiteSpace.parse("     ")
         }
     }
@@ -244,7 +244,7 @@ class SpaceTests extends ParsleyTest {
     }
 
     it should "initialise space to the default space definition" in {
-        val space = makeSpace(basicDependent.copy(space = predicate.Basic(Set('a'))))
+        val space = makeSpace(basicDependent.copy(space = Basic(Set('a'))))
         cases(space.init *> space.whiteSpace)(
             "aaaaaa" -> Some(()),
             "aaa##hello##" -> Some(()),
@@ -259,13 +259,13 @@ class SpaceTests extends ParsleyTest {
 
     "alter" should "not work if context-dependent whitespace is off" in {
         an [UnsupportedOperationException] should be thrownBy {
-            makeSpace(basicMixed).alter(predicate.NotRequired)(char('a')).parse("")
+            makeSpace(basicMixed).alter(NotRequired)(char('a')).parse("")
         }
     }
 
     it should "temporarily alter how whitespace is parsed" in {
         val space = makeSpace(basicDependent)
-        cases(space.init *> space.whiteSpace *> space.alter(predicate.Basic(Set('a'))) {
+        cases(space.init *> space.whiteSpace *> space.alter(Basic(Set('a'))) {
             char('b') *> space.whiteSpace *> char('b')
         } *> space.whiteSpace)(
             "bb" -> Some(()),
@@ -278,7 +278,7 @@ class SpaceTests extends ParsleyTest {
 
     it should "not restore old whitespace if the given parser fails having consumed input" in {
         val space = makeSpace(basicDependent)
-        val p = space.init *> (atomic(space.alter(predicate.Basic(Set('a')))(char('b') *> space.whiteSpace <* char('b'))) <|> char('b') *> space.whiteSpace)
+        val p = space.init *> (atomic(space.alter(Basic(Set('a')))(char('b') *> space.whiteSpace <* char('b'))) <|> char('b') *> space.whiteSpace)
         cases(p)(
             "baaab" -> Some(()),
             "baaaa" -> Some(()),

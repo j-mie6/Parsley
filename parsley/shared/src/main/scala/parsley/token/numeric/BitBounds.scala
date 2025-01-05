@@ -70,7 +70,7 @@ sealed class LowPriorityImplicits private[numeric] {
 }
 
 /** This object contains the definitions of several types that help enforce that
-  * parsers of bounded precision only return types that can losslessly accomodate
+  * parsers of bounded precision only return types that can losslessly accommodate
   * that precision.
   *
   * Note that, on the JVM, there is no such thing as an unsigned value ''natively''.
@@ -84,7 +84,7 @@ object CanHold extends LowPriorityImplicits {
     /** This type-constraint requires that the given type has enough bit-width
       * to store 8 bits of data.
       *
-      * @tparam T the type that can accomodate 8 bits.
+      * @tparam T the type that can accommodate 8 bits.
       * @since 4.0.0
       */
     @implicitNotFound("The type ${T} cannot hold an 8-bit number without loss")
@@ -92,7 +92,7 @@ object CanHold extends LowPriorityImplicits {
     /** This type-constraint requires that the given type has enough bit-width
       * to store 16 bits of data.
       *
-      * @tparam T the type that can accomodate 16 bits.
+      * @tparam T the type that can accommodate 16 bits.
       * @since 4.0.0
       */
     @implicitNotFound("The type ${T} cannot hold a 16-bit number without loss")
@@ -100,7 +100,7 @@ object CanHold extends LowPriorityImplicits {
     /** This type-constraint requires that the given type has enough bit-width
       * to store 32 bits of data.
       *
-      * @tparam T the type that can accomodate 32 bits.
+      * @tparam T the type that can accommodate 32 bits.
       * @since 4.0.0
       */
     @implicitNotFound("The type ${T} cannot hold a 32-bit number without loss")
@@ -108,7 +108,7 @@ object CanHold extends LowPriorityImplicits {
     /** This type-constraint requires that the given type has enough bit-width
       * to store 64 bits of data.
       *
-      * @tparam T the type that can accomodate 64 bits.
+      * @tparam T the type that can accommodate 64 bits.
       * @since 4.0.0
       */
     @implicitNotFound("The type ${T} cannot hold a 64-bit number without loss")

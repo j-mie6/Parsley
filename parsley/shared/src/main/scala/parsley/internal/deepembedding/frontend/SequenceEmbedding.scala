@@ -13,7 +13,7 @@ private [parsley] final class <*>[A, B](pf: LazyParsley[A => B], px: =>LazyParsl
     // $COVERAGE-OFF$
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[B] = visitor.visit(this, context)(pf, px)
 
-    override private[parsley] def prettyName = "<*>"
+    private [parsley] var debugName = "<*>"
     // $COVERAGE-ON$
 }
 
@@ -23,7 +23,7 @@ private [parsley] final class >>=[A, B](p: LazyParsley[A], private val f: A => L
     // $COVERAGE-OFF$
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[B] = visitor.visit(this, context)(p, f)
 
-    override private[parsley] def prettyName = "flatMap"
+    private [parsley] var debugName = "flatMap"
     // $COVERAGE-ON$
 }
 
@@ -33,7 +33,7 @@ private [parsley] final class *>[A](_p: LazyParsley[_], _q: =>LazyParsley[A]) ex
     // $COVERAGE-OFF$
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[A] = visitor.visit(this, context)(_p, _q)
 
-    override private[parsley] def prettyName = "~>"
+    private [parsley] var debugName = "~>"
     // $COVERAGE-ON$
 }
 private [parsley] final class <*[A](_p: LazyParsley[A], _q: =>LazyParsley[_]) extends Binary[A, Any, A](_p, _q) {
@@ -42,6 +42,6 @@ private [parsley] final class <*[A](_p: LazyParsley[A], _q: =>LazyParsley[_]) ex
     // $COVERAGE-OFF$
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[A] = visitor.visit(this, context)(_p, _q)
 
-    override private[parsley] def prettyName = "<~"
+    private [parsley] var debugName = "<~"
     // $COVERAGE-ON$
 }

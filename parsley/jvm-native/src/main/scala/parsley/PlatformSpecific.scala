@@ -14,7 +14,7 @@ import parsley.errors.ErrorBuilder
 
 import parsley.internal.machine.Context
 
-class PlatformSpecific {
+trait PlatformSpecific {
     /** This class exposes a method of running parsers from a file.
       *
       * This extension class operates on values that are convertible to parsers. It enables the use of
@@ -34,6 +34,7 @@ class PlatformSpecific {
           * @param codec the encoding of the file.
           * @return a `Try` containing a result of either a success with a value of type `A` or a failure with error message on success,
           *         and a failure if an IOException occured.
+          * @group run
           * @since 4.5.0
           */
         def parseFile[Err: ErrorBuilder](file: File)(implicit codec: Codec): Try[Result[Err, A]] = {
@@ -47,7 +48,7 @@ class PlatformSpecific {
             } yield {
                 src.close()
                 val internal = p.internal
-                new Context(internal.instrs, input, internal.numRegs, Some(file.getName)).run()
+                new Context(internal.instrs, input, internal.numRefs, Some(file.getName)).run()
             }
         }
     }

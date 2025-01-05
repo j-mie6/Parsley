@@ -6,10 +6,7 @@ laika.site.metadata.description = "This page describes how Parsley's lexer works
 %}
 
 ```scala mdoc:invisible
-import parsley.token.{Lexer, descriptions, predicate}, descriptions.{LexicalDesc, numeric, text}
-import predicate.CharPredicate
-import numeric._
-import text._
+import parsley.token.{Lexer, descriptions, CharPred, Basic, Unicode}, descriptions._
 ```
 
 # Lexer (`parsley.token.Lexer`)
@@ -127,7 +124,7 @@ this includes both integers and floating point numbers. The configuration for al
 is managed by [`LexicalDesc.numericDesc`](@:api(parsley.token.descriptions.numeric.NumericDesc)).
 The members are split into three kinds:
 
-* [`parsley.token.numeric.Integer`](@:api(parsley.token.numeric.Integer)): values with this type
+* [`parsley.token.numeric.IntegerParsers`](@:api(parsley.token.numeric.IntegerParsers)): values with this type
   deal with whole numbers, and this interface in particular has support for different bases of
   number as well as various bit-widths of parsed data. When the bit-width of the parser is restricted,
   the generated result can be any numeric type that is wide enough to accommodate those values. If
@@ -141,7 +138,7 @@ The members are split into three kinds:
 
   Currently, there is no way of adding new bit-widths or defining custom numeric container types.
 
-* [`parsley.token.numeric.Real`](@:api(parsley.token.numeric.Real)): values with this type
+* [`parsley.token.numeric.RealParsers`](@:api(parsley.token.numeric.RealParsers)): values with this type
   deal with floating-point numbers **only**: values without a point or an exponent (if allowed)
   will not be parsed by these parsers. Like `Integer`, different bases can be specified: in this
   case the meaning of exponents can be controlled within the configuration, for instance, a
@@ -149,13 +146,13 @@ The members are split into three kinds:
   because `p` represents an exponent delimiter and hexadecimal exponents are normally base 2 (but
   this is fully configurable in `parsley`).
 
-  Compared to `Integer`, different precisions can be chosen for `Real`, allowing for
+  Compared to `IntegerParsers`, different precisions can be chosen for `RealParsers`, allowing for
   arbitrary-precision floats, `Float`, and `Double` results. For the stricter representations,
   there is a `doubleRounded`/`floatRounded` that just gives the nearest valid value (with no parse
   errors), and a `double`/`float` which demands that the parsed literal must at least be
   between the smallest and largest numbers of the type.
 
-* [`parsley.token.numeric.Combined`](@:api(parsley.token.numeric.Combined)): values with this type
+* [`parsley.token.numeric.CombinedParsers`](@:api(parsley.token.numeric.CombinedParsers)): values with this type
   can deal with both integers and floating-point numbers. This is done by returning one or the other
   as part of an `Either`. A *slightly* limited selection of bit-widths and precisions are available
   for both parts. The draw of these combinators is that they may remove the ambiguity between the
@@ -239,9 +236,9 @@ floats: `0x0.Bp0` is the same as `0b0.1011p0`, both of which are `0.6875` in dec
 
 ## `Lexer.{lexeme, nonlexeme}` Text Parsers
 This [object](@:api(parsley.token.Lexer$lexeme$$text$)) deals with the parsing of both string
-literals and character literals, configured broadby by [`LexicalDesc.textDesc`](@:api(parsley.token.descriptions.text.TextDesc)):
+literals and character literals, configured broadly by [`LexicalDesc.textDesc`](@:api(parsley.token.descriptions.text.TextDesc)):
 
-* [`parsley.token.text.String`](@:api(parsley.token.text.String)): values with this type
+* [`parsley.token.text.StringParsers`](@:api(parsley.token.text.StringParsers)): values with this type
   deal with multi-character/codepoint strings. Specifically, the interface provides ways
   of dealing with different levels of character encodings.
 
@@ -263,7 +260,7 @@ literals and character literals, configured broadby by [`LexicalDesc.textDesc`](
   exact same sequence.
   @:@
 
-* [`parsley.token.text.Character`](@:api(parsley.token.text.Character)): like `String`,
+* [`parsley.token.text.CharacterParsers`](@:api(parsley.token.text.CharacterParsers)): like `StringParsers`,
   the `text.character` object can handle different kinds of text encoding. However, unlike
   `String`, there is only one kind of character available, which has escape codes and can only
   contain a single graphic character (or, if applicable, single unicode codepoint).
@@ -287,8 +284,8 @@ This can be restricted to a smaller set than might otherwise have been checked b
 generated:
 
 ```scala mdoc:to-string
-val aboveSpace = predicate.Unicode(_ >= 0x20)
-def stringParsers(graphicChar: CharPredicate = aboveSpace,
+val aboveSpace = Unicode(_ >= 0x20)
+def stringParsers(graphicChar: CharPred = aboveSpace,
                   escapeDesc: EscapeDesc = EscapeDesc.plain) =
     new Lexer(LexicalDesc.plain.copy(
         textDesc = TextDesc.plain.copy(
@@ -298,7 +295,7 @@ def stringParsers(graphicChar: CharPredicate = aboveSpace,
     )).nonlexeme.string
 
 val fullUnicode = stringParsers(aboveSpace)
-val latin1Limited = stringParsers(predicate.Basic(c => c >= 0x20 && c <= 0xcf))
+val latin1Limited = stringParsers(Basic(c => c >= 0x20 && c <= 0xcf))
 
 fullUnicode.latin1.parse("\"hello α\"")
 latin1Limited.fullUtf16.parse("\"hello α\"")
@@ -315,23 +312,18 @@ they represent. Parsley supports three different kinds of denotative escape char
   examples would be `\"` or `\\`, which are an escaped double quote and backslash,
   respectively. The literal set for these would be `Set('"', '\\')`
 
-* `EscapeDesc.singleMap`: these are a mapping of specific single characters to the underlying
+* `EscapeDesc.mapping`: these are a mapping of specific sequences of characters to the underlying
   characters they represent. Commonly, this might be something like `\n`, which would be
-  represented in the map by an entry `'n' -> 0xa`.
+  represented in the map by an entry `"n" -> 0xa`, or `"NULL" -> 0x0` for `'\NULL'`.
 
-* `EscapeDesc.multiMap`: these generalise the single map by allowing a multiple character
-  sequence to represent a specific escape character. These are less common in "the wild",
-  but a good example is Haskell, where `'\NULL'` is a valid character, represented by an
-  entry `"NULL" -> 0x0` in the `multiMap`.
-
-Of course, all denotative escape sequences can be represented by the `multiMap` on its own,
+Of course, all denotative escape sequences can be represented by the `mapping` on its own,
 and all the above examples could be represented by
 `Map("\"" -> '"', "\\" -> '\\', "n" -> 0xa, "NULL" -> 0x0)`. For `literals` in particular, the
 `Set` is more ergonomic than the `Map`.
 
 @:callout(error)
-Note that the `literals` set, along with the keys of `singleMap` and `multiMap`, must all be
-distinct from each other. Furthermore, no empty sequences may be placed in `multiMap`.
+Note that the `literals` set, along with the keys of `mapping`, must all be
+distinct from each other. Furthermore, no empty sequences may be placed in `mapping`.
 Violating any of these requirements will result in an error.
 @:@
 
@@ -398,7 +390,7 @@ change the definition of whitespace (but not comments) within the scope of a giv
 As an example:
 
 ```scala
-val withNewline = predicate.Basic(_.isSpace)
+val withNewline = Basic(_.isSpace)
 val expr = ... | "(" ~> lexer.space.alter(withNewline)(expr) <~ ")"
 ```
 

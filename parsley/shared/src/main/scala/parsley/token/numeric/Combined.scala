@@ -33,40 +33,40 @@ import parsley.token.errors.ErrorConfig
   * @define multibase
   *   Depending on the configuration this may be able to handle different bases for each type of number.
   */
-abstract class Combined private[numeric] (err: ErrorConfig) { // scalastyle:ignore number.of.methods
+abstract class CombinedParsers private[numeric] (err: ErrorConfig) { // scalastyle:ignore number.of.methods
     /** $base1 decimal number, $base2.
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.decimal `Integer.decimal`]] and [[Real.decimal `Real.decimal`]]
+      * @see [[IntegerParsers.decimal `IntegerParsers.decimal`]] and [[RealParsers.decimal `RealParsers.decimal`]]
       */
     def decimal: Parsley[Either[BigInt, BigDecimal]]
     /** $base1 hexadecimal number, $base2.
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.hexadecimal `Integer.hexadecimal`]] and [[Real.hexadecimal `Real.hexadecimal`]]
+      * @see [[IntegerParsers.hexadecimal `IntegerParsers.hexadecimal`]] and [[RealParsers.hexadecimal `RealParsers.hexadecimal`]]
       */
     def hexadecimal: Parsley[Either[BigInt, BigDecimal]]
     /** $base1 octal number, $base2.
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.octal `Integer.octal`]] and [[Real.octal `Real.octal`]]
+      * @see [[IntegerParsers.octal `IntegerParsers.octal`]] and [[RealParsers.octal `RealParsers.octal`]]
       */
     def octal: Parsley[Either[BigInt, BigDecimal]]
     /** $base1 binary number, $base2.
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.binary `Integer.binary`]] and [[Real.binary `Real.binary`]]
+      * @see [[IntegerParsers.binary `IntegerParsers.binary`]] and [[RealParsers.binary `RealParsers.binary`]]
       */
     def binary: Parsley[Either[BigInt, BigDecimal]]
     /** $base1 number, $base2. $multibase
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.number `Integer.number`]] and [[Real.number `Real.number`]]
+      * @see [[IntegerParsers.number `IntegerParsers.number`]] and [[RealParsers.number `RealParsers.number`]]
       */
     def number: Parsley[Either[BigInt, BigDecimal]]
 
@@ -76,35 +76,35 @@ abstract class Combined private[numeric] (err: ErrorConfig) { // scalastyle:igno
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.number8 `Integer.number8`]] and [[Real.number `Real.number`]]
+      * @see [[IntegerParsers.number8 `IntegerParsers.number8`]] and [[RealParsers.number `RealParsers.number`]]
       */
     @inline final def number8[T: CanHold.can_hold_8_bits]: Parsley[Either[T, BigDecimal]] = numberBounded(_8)
     /** $base1 decimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.decimal8 `Integer.decimal8`]] and [[Real.decimal `Real.decimal`]]
+      * @see [[IntegerParsers.decimal8 `IntegerParsers.decimal8`]] and [[RealParsers.decimal `RealParsers.decimal`]]
       */
     @inline final def decimal8[T: CanHold.can_hold_8_bits]: Parsley[Either[T, BigDecimal]] = decimalBounded(_8)
     /** $base1 hexadecimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.hexadecimal8 `Integer.hexadecimal8`]] and [[Real.hexadecimal `Real.hexadecimal`]]
+      * @see [[IntegerParsers.hexadecimal8 `IntegerParsers.hexadecimal8`]] and [[RealParsers.hexadecimal `RealParsers.hexadecimal`]]
       */
     @inline final def hexadecimal8[T: CanHold.can_hold_8_bits]: Parsley[Either[T, BigDecimal]] = hexadecimalBounded(_8)
     /** $base1 octal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.octal8 `Integer.octal8`]] and [[Real.octal `Real.octal`]]
+      * @see [[IntegerParsers.octal8 `IntegerParsers.octal8`]] and [[RealParsers.octal `RealParsers.octal`]]
       */
     @inline final def octal8[T: CanHold.can_hold_8_bits]: Parsley[Either[T, BigDecimal]] = octalBounded(_8)
     /** $base1 binary number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.binary8 `Integer.binary8`]] and [[Real.binary `Real.binary`]]
+      * @see [[IntegerParsers.binary8 `IntegerParsers.binary8`]] and [[RealParsers.binary `RealParsers.binary`]]
       */
     @inline final def binary8[T: CanHold.can_hold_8_bits]: Parsley[Either[T, BigDecimal]] = binaryBounded(_8)
 
@@ -112,35 +112,35 @@ abstract class Combined private[numeric] (err: ErrorConfig) { // scalastyle:igno
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.number8 `Integer.number8`]] and [[Real.float `Real.float`]]
+      * @see [[IntegerParsers.number8 `IntegerParsers.number8`]] and [[RealParsers.float `RealParsers.float`]]
       */
     @inline final def number8Float[T: CanHold.can_hold_8_bits]: Parsley[Either[T, Float]] = ensureFloat(numberBounded(_8))
     /** $base1 decimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.decimal8 `Integer.decimal8`]] and [[Real.decimalFloat `Real.decimalFloat`]]
+      * @see [[IntegerParsers.decimal8 `IntegerParsers.decimal8`]] and [[RealParsers.decimalFloat `RealParsers.decimalFloat`]]
       */
     @inline final def decimal8Float[T: CanHold.can_hold_8_bits]: Parsley[Either[T, Float]] = ensureFloat(decimalBounded(_8))
     /** $base1 hexadecimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.hexadecimal8 `Integer.hexadecimal8`]] and [[Real.hexadecimalFloat `Real.hexadecimalFloat`]]
+      * @see [[IntegerParsers.hexadecimal8 `IntegerParsers.hexadecimal8`]] and [[RealParsers.hexadecimalFloat `RealParsers.hexadecimalFloat`]]
       */
     @inline final def hexadecimal8Float[T: CanHold.can_hold_8_bits]: Parsley[Either[T, Float]] = ensureFloat(hexadecimalBounded(_8))
     /** $base1 octal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.octal8 `Integer.octal8`]] and [[Real.octalFloat `Real.octalFloat`]]
+      * @see [[IntegerParsers.octal8 `IntegerParsers.octal8`]] and [[RealParsers.octalFloat `RealParsers.octalFloat`]]
       */
     @inline final def octal8Float[T: CanHold.can_hold_8_bits]: Parsley[Either[T, Float]] = ensureFloat(octalBounded(_8))
     /** $base1 binary number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.binary8 `Integer.binary8`]] and [[Real.binaryFloat `Real.binaryFloat`]]
+      * @see [[IntegerParsers.binary8 `IntegerParsers.binary8`]] and [[RealParsers.binaryFloat `RealParsers.binaryFloat`]]
       */
     @inline final def binary8Float[T: CanHold.can_hold_8_bits]: Parsley[Either[T, Float]] = ensureFloat(binaryBounded(_8))
 
@@ -148,35 +148,35 @@ abstract class Combined private[numeric] (err: ErrorConfig) { // scalastyle:igno
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.number8 `Integer.number8`]] and [[Real.double `Real.double`]]
+      * @see [[IntegerParsers.number8 `IntegerParsers.number8`]] and [[RealParsers.double `RealParsers.double`]]
       */
     @inline final def number8Double[T: CanHold.can_hold_8_bits]: Parsley[Either[T, Double]] = ensureDouble(numberBounded(_8))
     /** $base1 decimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.decimal8 `Integer.decimal8`]] and [[Real.decimalDouble `Real.decimalDouble`]]
+      * @see [[IntegerParsers.decimal8 `IntegerParsers.decimal8`]] and [[RealParsers.decimalDouble `RealParsers.decimalDouble`]]
       */
     @inline final def decimal8Double[T: CanHold.can_hold_8_bits]: Parsley[Either[T, Double]] = ensureDouble(decimalBounded(_8))
     /** $base1 hexadecimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.hexadecimal8 `Integer.hexadecimal8`]] and [[Real.hexadecimalDouble `Real.hexadecimalDouble`]]
+      * @see [[IntegerParsers.hexadecimal8 `IntegerParsers.hexadecimal8`]] and [[RealParsers.hexadecimalDouble `RealParsers.hexadecimalDouble`]]
       */
     @inline final def hexadecimal8Double[T: CanHold.can_hold_8_bits]: Parsley[Either[T, Double]] = ensureDouble(hexadecimalBounded(_8))
     /** $base1 octal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.octal8 `Integer.octal8`]] and [[Real.octalDouble `Real.octalDouble`]]
+      * @see [[IntegerParsers.octal8 `IntegerParsers.octal8`]] and [[RealParsers.octalDouble `RealParsers.octalDouble`]]
       */
     @inline final def octal8Double[T: CanHold.can_hold_8_bits]: Parsley[Either[T, Double]] = ensureDouble(octalBounded(_8))
     /** $base1 binary number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.binary8 `Integer.binary8`]] and [[Real.binaryDouble `Real.binaryDouble`]]
+      * @see [[IntegerParsers.binary8 `IntegerParsers.binary8`]] and [[RealParsers.binaryDouble `RealParsers.binaryDouble`]]
       */
     @inline final def binary8Double[T: CanHold.can_hold_8_bits]: Parsley[Either[T, Double]] = ensureDouble(binaryBounded(_8))
 
@@ -184,35 +184,35 @@ abstract class Combined private[numeric] (err: ErrorConfig) { // scalastyle:igno
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.number16 `Integer.number8`]] and [[Real.number `Real.number`]]
+      * @see [[IntegerParsers.number16 `IntegerParsers.number8`]] and [[RealParsers.number `RealParsers.number`]]
       */
     @inline final def number16[T: CanHold.can_hold_16_bits]: Parsley[Either[T, BigDecimal]] = numberBounded(_16)
     /** $base1 decimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.decimal16 `Integer.decimal16`]] and [[Real.decimal `Real.decimal`]]
+      * @see [[IntegerParsers.decimal16 `IntegerParsers.decimal16`]] and [[RealParsers.decimal `RealParsers.decimal`]]
       */
     @inline final def decimal16[T: CanHold.can_hold_16_bits]: Parsley[Either[T, BigDecimal]] = decimalBounded(_16)
     /** $base1 hexadecimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.hexadecimal16 `Integer.hexadecimal16`]] and [[Real.hexadecimal `Real.hexadecimal`]]
+      * @see [[IntegerParsers.hexadecimal16 `IntegerParsers.hexadecimal16`]] and [[RealParsers.hexadecimal `RealParsers.hexadecimal`]]
       */
     @inline final def hexadecimal16[T: CanHold.can_hold_16_bits]: Parsley[Either[T, BigDecimal]] = hexadecimalBounded(_16)
     /** $base1 octal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.octal16 `Integer.octal16`]] and [[Real.octal `Real.octal`]]
+      * @see [[IntegerParsers.octal16 `IntegerParsers.octal16`]] and [[RealParsers.octal `RealParsers.octal`]]
       */
     @inline final def octal16[T: CanHold.can_hold_16_bits]: Parsley[Either[T, BigDecimal]] = octalBounded(_16)
     /** $base1 binary number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.binary16 `Integer.binary16`]] and [[Real.binary `Real.binary`]]
+      * @see [[IntegerParsers.binary16 `IntegerParsers.binary16`]] and [[RealParsers.binary `RealParsers.binary`]]
       */
     @inline final def binary16[T: CanHold.can_hold_16_bits]: Parsley[Either[T, BigDecimal]] = binaryBounded(_16)
 
@@ -220,35 +220,35 @@ abstract class Combined private[numeric] (err: ErrorConfig) { // scalastyle:igno
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.number16 `Integer.number16`]] and [[Real.float `Real.float`]]
+      * @see [[IntegerParsers.number16 `IntegerParsers.number16`]] and [[RealParsers.float `RealParsers.float`]]
       */
     @inline final def number16Float[T: CanHold.can_hold_16_bits]: Parsley[Either[T, Float]] = ensureFloat(numberBounded(_16))
     /** $base1 decimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.decimal16 `Integer.decimal16`]] and [[Real.decimalFloat `Real.decimalFloat`]]
+      * @see [[IntegerParsers.decimal16 `IntegerParsers.decimal16`]] and [[RealParsers.decimalFloat `RealParsers.decimalFloat`]]
       */
     @inline final def decimal16Float[T: CanHold.can_hold_16_bits]: Parsley[Either[T, Float]] = ensureFloat(decimalBounded(_16))
     /** $base1 hexadecimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.hexadecimal16 `Integer.hexadecimal16`]] and [[Real.hexadecimalFloat `Real.hexadecimalFloat`]]
+      * @see [[IntegerParsers.hexadecimal16 `IntegerParsers.hexadecimal16`]] and [[RealParsers.hexadecimalFloat `RealParsers.hexadecimalFloat`]]
       */
     @inline final def hexadecimal16Float[T: CanHold.can_hold_16_bits]: Parsley[Either[T, Float]] = ensureFloat(hexadecimalBounded(_16))
     /** $base1 octal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.octal16 `Integer.octal16`]] and [[Real.octalFloat `Real.octalFloat`]]
+      * @see [[IntegerParsers.octal16 `IntegerParsers.octal16`]] and [[RealParsers.octalFloat `RealParsers.octalFloat`]]
       */
     @inline final def octal16Float[T: CanHold.can_hold_16_bits]: Parsley[Either[T, Float]] = ensureFloat(octalBounded(_16))
     /** $base1 binary number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.binary16 `Integer.binary16`]] and [[Real.binaryFloat `Real.binaryFloat`]]
+      * @see [[IntegerParsers.binary16 `IntegerParsers.binary16`]] and [[RealParsers.binaryFloat `RealParsers.binaryFloat`]]
       */
     @inline final def binary16Float[T: CanHold.can_hold_16_bits]: Parsley[Either[T, Float]] = ensureFloat(binaryBounded(_16))
 
@@ -256,35 +256,35 @@ abstract class Combined private[numeric] (err: ErrorConfig) { // scalastyle:igno
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.number16 `Integer.number16`]] and [[Real.double `Real.double`]]
+      * @see [[IntegerParsers.number16 `IntegerParsers.number16`]] and [[RealParsers.double `RealParsers.double`]]
       */
     @inline final def number16Double[T: CanHold.can_hold_16_bits]: Parsley[Either[T, Double]] = ensureDouble(numberBounded(_16))
     /** $base1 decimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.decimal16 `Integer.decimal16`]] and [[Real.decimalDouble `Real.decimalDouble`]]
+      * @see [[IntegerParsers.decimal16 `IntegerParsers.decimal16`]] and [[RealParsers.decimalDouble `RealParsers.decimalDouble`]]
       */
     @inline final def decimal16Double[T: CanHold.can_hold_16_bits]: Parsley[Either[T, Double]] = ensureDouble(decimalBounded(_16))
     /** $base1 hexadecimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.hexadecimal16 `Integer.hexadecimal16`]] and [[Real.hexadecimalDouble `Real.hexadecimalDouble`]]
+      * @see [[IntegerParsers.hexadecimal16 `IntegerParsers.hexadecimal16`]] and [[RealParsers.hexadecimalDouble `RealParsers.hexadecimalDouble`]]
       */
     @inline final def hexadecimal16Double[T: CanHold.can_hold_16_bits]: Parsley[Either[T, Double]] = ensureDouble(hexadecimalBounded(_16))
     /** $base1 octal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.octal16 `Integer.octal16`]] and [[Real.octalDouble `Real.octalDouble`]]
+      * @see [[IntegerParsers.octal16 `IntegerParsers.octal16`]] and [[RealParsers.octalDouble `RealParsers.octalDouble`]]
       */
     @inline final def octal16Double[T: CanHold.can_hold_16_bits]: Parsley[Either[T, Double]] = ensureDouble(octalBounded(_16))
     /** $base1 binary number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.binary16 `Integer.binary16`]] and [[Real.binaryDouble `Real.binaryDouble`]]
+      * @see [[IntegerParsers.binary16 `IntegerParsers.binary16`]] and [[RealParsers.binaryDouble `RealParsers.binaryDouble`]]
       */
     @inline final def binary16Double[T: CanHold.can_hold_16_bits]: Parsley[Either[T, Double]] = ensureDouble(binaryBounded(_16))
 
@@ -292,35 +292,35 @@ abstract class Combined private[numeric] (err: ErrorConfig) { // scalastyle:igno
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.number32 `Integer.number32`]] and [[Real.number `Real.number`]]
+      * @see [[IntegerParsers.number32 `IntegerParsers.number32`]] and [[RealParsers.number `RealParsers.number`]]
       */
     @inline final def number32[T: CanHold.can_hold_32_bits]: Parsley[Either[T, BigDecimal]] = numberBounded(_32)
     /** $base1 decimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.decimal32 `Integer.decimal32`]] and [[Real.decimal `Real.decimal`]]
+      * @see [[IntegerParsers.decimal32 `IntegerParsers.decimal32`]] and [[RealParsers.decimal `RealParsers.decimal`]]
       */
     @inline final def decimal32[T: CanHold.can_hold_32_bits]: Parsley[Either[T, BigDecimal]] = decimalBounded(_32)
     /** $base1 hexadecimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.hexadecimal32 `Integer.hexadecimal32`]] and [[Real.hexadecimal `Real.hexadecimal`]]
+      * @see [[IntegerParsers.hexadecimal32 `IntegerParsers.hexadecimal32`]] and [[RealParsers.hexadecimal `RealParsers.hexadecimal`]]
       */
     @inline final def hexadecimal32[T: CanHold.can_hold_32_bits]: Parsley[Either[T, BigDecimal]] = hexadecimalBounded(_32)
     /** $base1 octal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.octal32 `Integer.octal32`]] and [[Real.octal `Real.octal`]]
+      * @see [[IntegerParsers.octal32 `IntegerParsers.octal32`]] and [[RealParsers.octal `RealParsers.octal`]]
       */
     @inline final def octal32[T: CanHold.can_hold_32_bits]: Parsley[Either[T, BigDecimal]] = octalBounded(_32)
     /** $base1 binary number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.binary32 `Integer.binary32`]] and [[Real.binary `Real.binary`]]
+      * @see [[IntegerParsers.binary32 `IntegerParsers.binary32`]] and [[RealParsers.binary `RealParsers.binary`]]
       */
     @inline final def binary32[T: CanHold.can_hold_32_bits]: Parsley[Either[T, BigDecimal]] = binaryBounded(_32)
 
@@ -328,35 +328,35 @@ abstract class Combined private[numeric] (err: ErrorConfig) { // scalastyle:igno
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.number8 `Integer.number32`]] and [[Real.float `Real.float`]]
+      * @see [[IntegerParsers.number8 `IntegerParsers.number32`]] and [[RealParsers.float `RealParsers.float`]]
       */
     @inline final def number32Float[T: CanHold.can_hold_32_bits]: Parsley[Either[T, Float]] = ensureFloat(numberBounded(_32))
     /** $base1 decimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.decimal32 `Integer.decimal32`]] and [[Real.decimalFloat `Real.decimalFloat`]]
+      * @see [[IntegerParsers.decimal32 `IntegerParsers.decimal32`]] and [[RealParsers.decimalFloat `RealParsers.decimalFloat`]]
       */
     @inline final def decimal32Float[T: CanHold.can_hold_32_bits]: Parsley[Either[T, Float]] = ensureFloat(decimalBounded(_32))
     /** $base1 hexadecimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.hexadecimal32 `Integer.hexadecimal32`]] and [[Real.hexadecimalFloat `Real.hexadecimalFloat`]]
+      * @see [[IntegerParsers.hexadecimal32 `IntegerParsers.hexadecimal32`]] and [[RealParsers.hexadecimalFloat `RealParsers.hexadecimalFloat`]]
       */
     @inline final def hexadecimal32Float[T: CanHold.can_hold_32_bits]: Parsley[Either[T, Float]] = ensureFloat(hexadecimalBounded(_32))
     /** $base1 octal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.octal32 `Integer.octal32`]] and [[Real.octalFloat `Real.octalFloat`]]
+      * @see [[IntegerParsers.octal32 `IntegerParsers.octal32`]] and [[RealParsers.octalFloat `RealParsers.octalFloat`]]
       */
     @inline final def octal32Float[T: CanHold.can_hold_32_bits]: Parsley[Either[T, Float]] = ensureFloat(octalBounded(_32))
     /** $base1 binary number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.binary32 `Integer.binary32`]] and [[Real.binaryFloat `Real.binaryFloat`]]
+      * @see [[IntegerParsers.binary32 `IntegerParsers.binary32`]] and [[RealParsers.binaryFloat `RealParsers.binaryFloat`]]
       */
     @inline final def binary32Float[T: CanHold.can_hold_32_bits]: Parsley[Either[T, Float]] = ensureFloat(binaryBounded(_32))
 
@@ -364,35 +364,35 @@ abstract class Combined private[numeric] (err: ErrorConfig) { // scalastyle:igno
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.number32 `Integer.number32`]] and [[Real.double `Real.double`]]
+      * @see [[IntegerParsers.number32 `IntegerParsers.number32`]] and [[RealParsers.double `RealParsers.double`]]
       */
     @inline final def number32Double[T: CanHold.can_hold_32_bits]: Parsley[Either[T, Double]] = ensureDouble(numberBounded(_32))
     /** $base1 decimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.decimal32 `Integer.decimal32`]] and [[Real.decimalDouble `Real.decimalDouble`]]
+      * @see [[IntegerParsers.decimal32 `IntegerParsers.decimal32`]] and [[RealParsers.decimalDouble `RealParsers.decimalDouble`]]
       */
     @inline final def decimal32Double[T: CanHold.can_hold_32_bits]: Parsley[Either[T, Double]] = ensureDouble(decimalBounded(_32))
     /** $base1 hexadecimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.hexadecimal32 `Integer.hexadecimal32`]] and [[Real.hexadecimalDouble `Real.hexadecimalDouble`]]
+      * @see [[IntegerParsers.hexadecimal32 `IntegerParsers.hexadecimal32`]] and [[RealParsers.hexadecimalDouble `RealParsers.hexadecimalDouble`]]
       */
     @inline final def hexadecimal32Double[T: CanHold.can_hold_32_bits]: Parsley[Either[T, Double]] = ensureDouble(hexadecimalBounded(_32))
     /** $base1 octal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.octal32 `Integer.octal32`]] and [[Real.octalDouble `Real.octalDouble`]]
+      * @see [[IntegerParsers.octal32 `IntegerParsers.octal32`]] and [[RealParsers.octalDouble `RealParsers.octalDouble`]]
       */
     @inline final def octal32Double[T: CanHold.can_hold_32_bits]: Parsley[Either[T, Double]] = ensureDouble(octalBounded(_32))
     /** $base1 binary number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.binary32 `Integer.binary32`]] and [[Real.binaryDouble `Real.binaryDouble`]]
+      * @see [[IntegerParsers.binary32 `IntegerParsers.binary32`]] and [[RealParsers.binaryDouble `RealParsers.binaryDouble`]]
       */
     @inline final def binary32Double[T: CanHold.can_hold_32_bits]: Parsley[Either[T, Double]] = ensureDouble(binaryBounded(_32))
 
@@ -400,35 +400,35 @@ abstract class Combined private[numeric] (err: ErrorConfig) { // scalastyle:igno
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.number64 `Integer.number8`]] and [[Real.number `Real.number`]]
+      * @see [[IntegerParsers.number64 `IntegerParsers.number8`]] and [[RealParsers.number `RealParsers.number`]]
       */
     @inline final def number64[T: CanHold.can_hold_64_bits]: Parsley[Either[T, BigDecimal]] = numberBounded(_64)
     /** $base1 decimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.decimal64 `Integer.decimal64`]] and [[Real.decimal `Real.decimal`]]
+      * @see [[IntegerParsers.decimal64 `IntegerParsers.decimal64`]] and [[RealParsers.decimal `RealParsers.decimal`]]
       */
     @inline final def decimal64[T: CanHold.can_hold_64_bits]: Parsley[Either[T, BigDecimal]] = decimalBounded(_64)
     /** $base1 hexadecimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.hexadecimal64 `Integer.hexadecimal64`]] and [[Real.hexadecimal `Real.hexadecimal`]]
+      * @see [[IntegerParsers.hexadecimal64 `IntegerParsers.hexadecimal64`]] and [[RealParsers.hexadecimal `RealParsers.hexadecimal`]]
       */
     @inline final def hexadecimal64[T: CanHold.can_hold_64_bits]: Parsley[Either[T, BigDecimal]] = hexadecimalBounded(_64)
     /** $base1 octal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.octal64 `Integer.octal64`]] and [[Real.octal `Real.octal`]]
+      * @see [[IntegerParsers.octal64 `IntegerParsers.octal64`]] and [[RealParsers.octal `RealParsers.octal`]]
       */
     @inline final def octal64[T: CanHold.can_hold_64_bits]: Parsley[Either[T, BigDecimal]] = octalBounded(_64)
     /** $base1 binary number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.binary64 `Integer.binary64`]] and [[Real.binary `Real.binary`]]
+      * @see [[IntegerParsers.binary64 `IntegerParsers.binary64`]] and [[RealParsers.binary `RealParsers.binary`]]
       */
     @inline final def binary64[T: CanHold.can_hold_64_bits]: Parsley[Either[T, BigDecimal]] = binaryBounded(_64)
 
@@ -436,35 +436,35 @@ abstract class Combined private[numeric] (err: ErrorConfig) { // scalastyle:igno
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.number64 `Integer.number64`]] and [[Real.float `Real.float`]]
+      * @see [[IntegerParsers.number64 `IntegerParsers.number64`]] and [[RealParsers.float `RealParsers.float`]]
       */
     @inline final def number64Float[T: CanHold.can_hold_64_bits]: Parsley[Either[T, Float]] = ensureFloat(numberBounded(_64))
     /** $base1 decimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.decimal64 `Integer.decimal64`]] and [[Real.decimalFloat `Real.decimalFloat`]]
+      * @see [[IntegerParsers.decimal64 `IntegerParsers.decimal64`]] and [[RealParsers.decimalFloat `RealParsers.decimalFloat`]]
       */
     @inline final def decimal64Float[T: CanHold.can_hold_64_bits]: Parsley[Either[T, Float]] = ensureFloat(decimalBounded(_64))
     /** $base1 hexadecimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.hexadecimal64 `Integer.hexadecimal64`]] and [[Real.hexadecimalFloat `Real.hexadecimalFloat`]]
+      * @see [[IntegerParsers.hexadecimal64 `IntegerParsers.hexadecimal64`]] and [[RealParsers.hexadecimalFloat `RealParsers.hexadecimalFloat`]]
       */
     @inline final def hexadecimal64Float[T: CanHold.can_hold_64_bits]: Parsley[Either[T, Float]] = ensureFloat(hexadecimalBounded(_64))
     /** $base1 octal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.octal64 `Integer.octal64`]] and [[Real.octalFloat `Real.octalFloat`]]
+      * @see [[IntegerParsers.octal64 `IntegerParsers.octal64`]] and [[RealParsers.octalFloat `RealParsers.octalFloat`]]
       */
     @inline final def octal64Float[T: CanHold.can_hold_64_bits]: Parsley[Either[T, Float]] = ensureFloat(octalBounded(_64))
     /** $base1 binary number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.binary64 `Integer.binary64`]] and [[Real.binaryFloat `Real.binaryFloat`]]
+      * @see [[IntegerParsers.binary64 `IntegerParsers.binary64`]] and [[RealParsers.binaryFloat `RealParsers.binaryFloat`]]
       */
     @inline final def binary64Float[T: CanHold.can_hold_64_bits]: Parsley[Either[T, Float]] = ensureFloat(binaryBounded(_64))
 
@@ -472,35 +472,35 @@ abstract class Combined private[numeric] (err: ErrorConfig) { // scalastyle:igno
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.number64 `Integer.number64`]] and [[Real.double `Real.double`]]
+      * @see [[IntegerParsers.number64 `IntegerParsers.number64`]] and [[RealParsers.double `RealParsers.double`]]
       */
     @inline final def number64Double[T: CanHold.can_hold_64_bits]: Parsley[Either[T, Double]] = ensureDouble(numberBounded(_64))
     /** $base1 decimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.decimal64 `Integer.decimal64`]] and [[Real.decimalDouble `Real.decimalDouble`]]
+      * @see [[IntegerParsers.decimal64 `IntegerParsers.decimal64`]] and [[RealParsers.decimalDouble `RealParsers.decimalDouble`]]
       */
     @inline final def decimal64Double[T: CanHold.can_hold_64_bits]: Parsley[Either[T, Double]] = ensureDouble(decimalBounded(_64))
     /** $base1 hexadecimal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.hexadecimal64 `Integer.hexadecimal64`]] and [[Real.hexadecimalDouble `Real.hexadecimalDouble`]]
+      * @see [[IntegerParsers.hexadecimal64 `IntegerParsers.hexadecimal64`]] and [[RealParsers.hexadecimalDouble `RealParsers.hexadecimalDouble`]]
       */
     @inline final def hexadecimal64Double[T: CanHold.can_hold_64_bits]: Parsley[Either[T, Double]] = ensureDouble(hexadecimalBounded(_64))
     /** $base1 octal number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.octal64 `Integer.octal64`]] and [[Real.octalDouble `Real.octalDouble`]]
+      * @see [[IntegerParsers.octal64 `IntegerParsers.octal64`]] and [[RealParsers.octalDouble `RealParsers.octalDouble`]]
       */
     @inline final def octal64Double[T: CanHold.can_hold_64_bits]: Parsley[Either[T, Double]] = ensureDouble(octalBounded(_64))
     /** $base1 binary number, $base2. $bounded
       *
       * @since 4.0.0
       * @note $disclaimer
-      * @see [[Integer.binary64 `Integer.binary64`]] and [[Real.binaryDouble `Real.binaryDouble`]]
+      * @see [[IntegerParsers.binary64 `IntegerParsers.binary64`]] and [[RealParsers.binaryDouble `RealParsers.binaryDouble`]]
       */
     @inline final def binary64Double[T: CanHold.can_hold_64_bits]: Parsley[Either[T, Double]] = ensureDouble(binaryBounded(_64))
 
@@ -523,14 +523,14 @@ abstract class Combined private[numeric] (err: ErrorConfig) { // scalastyle:igno
     protected [numeric] def ensureFloat[T](number: Parsley[Either[T, BigDecimal]]): Parsley[Either[T, Float]] = {
         err.filterRealOutOfBounds(err.floatName, BigDecimal(Float.MinValue.toDouble), BigDecimal(Float.MaxValue.toDouble)).injectRight.collect(number) {
             case Left(n) => Left(n)
-            case Right(n) if Real.isFloat(n) => Right(n.toFloat)
+            case Right(n) if RealParsers.isFloat(n) => Right(n.toFloat)
         }
     }
 
     protected [numeric] def ensureDouble[T](number: Parsley[Either[T, BigDecimal]]): Parsley[Either[T, Double]] = {
         err.filterRealOutOfBounds(err.doubleName, BigDecimal(Double.MinValue), BigDecimal(Double.MaxValue)).injectRight.collect(number) {
             case Left(n) => Left(n)
-            case Right(n) if Real.isDouble(n) => Right(n.toDouble)
+            case Right(n) if RealParsers.isDouble(n) => Right(n.toDouble)
         }
     }
 }

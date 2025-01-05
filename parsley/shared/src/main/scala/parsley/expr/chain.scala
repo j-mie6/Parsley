@@ -38,7 +38,7 @@ object chain {
       * scala> sealed trait Expr
       * scala> case class Add(x: Expr, y: Expr) extends Expr
       * scala> case class Num(x: Int) extends Expr
-      * scala> val expr = chain.right1(digit.map(d => Num(d.asDigit)), char('+').as(Add))
+      * scala> val expr = chain.right1(digit.map(d => Num(d.asDigit)))(char('+').as(Add))
       * scala> expr.parse("1+2+3+4")
       * val res0 = Success(Add(Num(1), Add(Num(2), Add(Num(3), Num(4)))))
       * scala> expr.parse("")
@@ -52,7 +52,7 @@ object chain {
       * @since 4.0.0
       * @group binary
       */
-    def right1[A](p: Parsley[A], op: =>Parsley[(A, A) => A]): Parsley[A] = infix.right1(p, op)
+    def right1[A](p: Parsley[A])(op: =>Parsley[(A, A) => A]): Parsley[A] = infix.right1(p)(op)
 
     /** This combinator handles left-associative parsing, and application of, '''zero''' or more binary operators between '''one''' or more values.
       *
@@ -66,7 +66,7 @@ object chain {
       * scala> sealed trait Expr
       * scala> case class Add(x: Expr, y: Expr) extends Expr
       * scala> case class Num(x: Int) extends Expr
-      * scala> val expr = chain.left1(digit.map(d => Num(d.asDigit)), char('+').as(Add))
+      * scala> val expr = chain.left1(digit.map(d => Num(d.asDigit)))(char('+').as(Add))
       * scala> expr.parse("1+2+3+4")
       * val res0 = Success(Add(Add(Add(Num(1), Num(2)), Num(3)), Num(4)))
       * scala> expr.parse("")
@@ -80,7 +80,7 @@ object chain {
       * @since 4.0.0
       * @group binary
       */
-    def left1[A](p: Parsley[A], op: =>Parsley[(A, A) => A]): Parsley[A] = infix.left1(p, op)
+    def left1[A](p: Parsley[A])(op: =>Parsley[(A, A) => A]): Parsley[A] = infix.left1(p)(op)
 
     /** This combinator handles right-associative parsing, and application of, '''zero''' or more binary operators between '''zero''' or more values.
       *
@@ -95,7 +95,7 @@ object chain {
       * scala> sealed trait Expr
       * scala> case class Add(x: Expr, y: Expr) extends Expr
       * scala> case class Num(x: Int) extends Expr
-      * scala> val expr = chain.right(digit.map(d => Num(d.asDigit)), char('+').as(Add), Num(0))
+      * scala> val expr = chain.right(digit.map(d => Num(d.asDigit)))(char('+').as(Add), Num(0))
       * scala> expr.parse("1+2+3+4")
       * val res0 = Success(Add(Num(1), Add(Num(2), Add(Num(3), Num(4)))))
       * scala> expr.parse("")
@@ -111,7 +111,7 @@ object chain {
       * @since 4.0.0
       * @group binary
       */
-    def right[A](p: Parsley[A], op: =>Parsley[(A, A) => A], x: A): Parsley[A] = infix.right(p, op, x) // TODO: right(x)(p, op)?
+    def right[A](p: Parsley[A])(op: =>Parsley[(A, A) => A], x: A): Parsley[A] = infix.right(p)(op, x)
 
     /** This combinator handles left-associative parsing, and application of, '''zero''' or more binary operators between '''zero''' or more values.
       *
@@ -126,7 +126,7 @@ object chain {
       * scala> sealed trait Expr
       * scala> case class Add(x: Expr, y: Expr) extends Expr
       * scala> case class Num(x: Int) extends Expr
-      * scala> val expr = chain.left(digit.map(d => Num(d.asDigit)), char('+').as(Add), Num(0))
+      * scala> val expr = chain.left(digit.map(d => Num(d.asDigit)))(char('+').as(Add), Num(0))
       * scala> expr.parse("1+2+3+4")
       * val res0 = Success(Add(Add(Add(Num(1), Num(2)), Num(3)), Num(4)))
       * scala> expr.parse("")
@@ -142,7 +142,7 @@ object chain {
       * @since 4.0.0
       * @group binary
       */
-    def left[A](p: Parsley[A], op: =>Parsley[(A, A) => A], x: A): Parsley[A] = infix.left(p, op, x) // TODO: left(x)(p, op)?
+    def left[A](p: Parsley[A])(op: =>Parsley[(A, A) => A], x: A): Parsley[A] = infix.left(p)(op, x)
 
     /** This combinator handles right-assocative parsing, and application of, '''zero''' or more prefix unary operators to a single value.
       *
@@ -158,7 +158,7 @@ object chain {
       * scala> case class Negate(x: Expr) extends Expr
       * scala> case class Id(x: Expr) extends Expr
       * scala> case class Num(x: Int) extends Expr
-      * scala> val expr = chain.prefix(char('-').as(Negate) <|> char('+').as(Id), digit.map(d => Num(d.asDigit)))
+      * scala> val expr = chain.prefix(digit.map(d => Num(d.asDigit))(char('-').as(Negate) <|> char('+').as(Id))
       * scala> expr.parse("--+1")
       * val res0 = Success(Negate(Negate(Id(Num(1)))))
       * scala> expr.parse("1")
@@ -173,7 +173,7 @@ object chain {
       * @since 2.2.0
       * @group unary
       */
-    def prefix[A](op: Parsley[A => A], p: Parsley[A]): Parsley[A] = new Parsley(new frontend.ChainPre(p.internal, op.internal))
+    def prefix[A](p: Parsley[A])(op: Parsley[A => A]): Parsley[A] = new Parsley(new frontend.ChainPre(p.internal, op.internal))
 
     /** This combinator handles left-assocative parsing, and application of, '''zero''' or more postfix unary operators to a single value.
       *
@@ -189,7 +189,7 @@ object chain {
       * scala> case class Inc(x: Expr) extends Expr
       * scala> case class Dec(x: Expr) extends Expr
       * scala> case class Num(x: Int) extends Expr
-      * scala> val expr = chain.postfix(digit.map(d => Num(d.asDigit)), string("++").as(Inc) <|> string("--").as(Dec))
+      * scala> val expr = chain.postfix(digit.map(d => Num(d.asDigit)))(string("++").as(Inc) <|> string("--").as(Dec))
       * scala> expr.parse("1++----")
       * val res0 = Success(Dec(Dec(Inc(Num(1)))))
       * scala> expr.parse("1")
@@ -204,7 +204,7 @@ object chain {
       * @since 2.2.0
       * @group unary
       */
-    def postfix[A](p: Parsley[A], op: =>Parsley[A => A]): Parsley[A] = new Parsley(new frontend.ChainPost(p.internal, op.internal))
+    def postfix[A](p: Parsley[A])(op: =>Parsley[A => A]): Parsley[A] = new Parsley(new frontend.ChainPost(p.internal, op.internal))
 
     /** This combinator handles right-assocative parsing, and application of, '''one''' or more prefix unary operators to a single value.
       *
@@ -220,7 +220,7 @@ object chain {
       * scala> case class Negate(x: Expr) extends Expr
       * scala> case class Id(x: Expr) extends Expr
       * scala> case class Num(x: Int) extends Expr
-      * scala> val expr = chain.prefix1(char('-').as(Negate) <|> char('+').as(Id), digit.map(d => Num(d.asDigit)))
+      * scala> val expr = chain.prefix1(digit.map(d => Num(d.asDigit)))(char('-').as(Negate) <|> char('+').as(Id))
       * scala> expr.parse("--+1")
       * val res0 = Success(Negate(Negate(Id(Num(1)))))
       * scala> expr.parse("1")
@@ -235,7 +235,7 @@ object chain {
       * @since 3.0.0
       * @group unary
       */
-    def prefix1[A, B <: A](op: Parsley[A => B], p: =>Parsley[A]): Parsley[B] = op <*> prefix(op, p)
+    def prefix1[A, B <: A](p: =>Parsley[A])(op: Parsley[A => B]): Parsley[B] = op <*> prefix(p)(op)
 
     /** This combinator handles left-assocative parsing, and application of, '''one''' or more postfix unary operators to a single value.
       *
@@ -266,8 +266,8 @@ object chain {
       * @since 3.0.0
       * @group unary
       */
-    def postfix1[A, B <: A](p: Parsley[A], op: =>Parsley[A => B]): Parsley[B] = {
+    def postfix1[A, B <: A](p: Parsley[A])(op: =>Parsley[A => B]): Parsley[B] = {
         lazy val op_ = op
-        postfix(p <**> op_, op_)
+        postfix(p <**> op_)(op_)
     }
 }

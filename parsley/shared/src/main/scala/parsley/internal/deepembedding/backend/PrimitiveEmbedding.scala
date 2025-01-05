@@ -16,13 +16,13 @@ import parsley.internal.machine.instructions
 import StrictParsley.InstrBuffer
 import org.typelevel.scalaccompat.annotation.nowarn3
 
-private [deepembedding] final class Attempt[A](val p: StrictParsley[A]) extends ScopedUnaryWithState[A, A] {
+private [deepembedding] final class Atomic[A](val p: StrictParsley[A]) extends ScopedUnaryWithState[A, A] {
     override val instr: instructions.Instr = instructions.PopHandlerAndState
     override def instrNeedsLabel: Boolean = false
     override def handlerLabel(state: CodeGenState): Int  = state.getLabel(instructions.RestoreAndFail)
     override def optimise: StrictParsley[A] = p match {
         case p: CharTok[_] => p
-        case p: Attempt[_] => p
+        case p: Atomic[_] => p
         //case StringTok(s, _) if s.size == 1 => p
         case _ => this
     }
@@ -64,7 +64,7 @@ private [deepembedding] final class Let[A] extends StrictParsley[A] {
     def pretty: String = this.toString
     // $COVERAGE-ON$
 }
-private [deepembedding] final class Opaque[A](p: StrictParsley[A]) extends StrictParsley[A] {
+private [deepembedding] final class Impure[A](p: StrictParsley[A]) extends StrictParsley[A] {
     def inlinable: Boolean = p.inlinable
     override def codeGen[M[_, +_]: ContOps, R](producesResults: Boolean)(implicit instrs: InstrBuffer, state: CodeGenState): M[R,Unit] = {
         // this blocks result suppression, because the ErrorGen combinators have non-inspectible control flow
@@ -172,6 +172,6 @@ private [backend] object Profile {
 }
 // $COVERAGE-ON$
 
-private [backend] object Attempt {
-    def unapply[A](self: Attempt[A]): Some[StrictParsley[A]] = Some(self.p)
+private [backend] object Atomic {
+    def unapply[A](self: Atomic[A]): Some[StrictParsley[A]] = Some(self.p)
 }

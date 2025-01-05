@@ -3,9 +3,9 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-package parsley.token.descriptions.text
+package parsley.token.descriptions
 
-import parsley.token.predicate.{CharPredicate, Unicode}
+import parsley.token.{CharPred, Unicode}
 
 import parsley.internal.collection.immutable.Trie
 
@@ -78,8 +78,7 @@ object NumericEscape {
   *
   * @param escBegin the character that starts an escape sequence, very often this is `'\\'`.
   * @param literals the characters that can be directly escaped, but still represent themselves, for instance `'"'`, or `'\\'`.
-  * @param singleMap the possible single-character escape sequences and the (full UTF-16) character they map to, for instance `'n' -> 0xa`.
-  * @param multiMap the possible multi-character escape sequences and the (full UTF-16) character they map to.
+  * @param mapping the possible escape sequences that map to a character other than themselves and the (full UTF-16) character they map to, for instance `"n" -> 0xa`.
   * @param decimalEscape $numericEscape 10.
   * @param hexadecimalEscape $numericEscape 16.
   * @param octalEscape $numericEscape 8.
@@ -94,8 +93,7 @@ object NumericEscape {
   */
 final case class EscapeDesc (escBegin: Char,
                              literals: Set[Char],
-                             singleMap: Map[Char, Int],
-                             multiMap: Map[String, Int],
+                             mapping: Map[String, Int],
                              decimalEscape: NumericEscape,
                              hexadecimalEscape: NumericEscape,
                              octalEscape: NumericEscape,
@@ -103,21 +101,17 @@ final case class EscapeDesc (escBegin: Char,
                              emptyEscape: Option[Char],
                              gapsSupported: Boolean,
                             ) {
-    val escs = locally {
-        val multiKeys = multiMap.keySet
-        val singleKeys = singleMap.keySet
-        require(multiKeys.forall(_.nonEmpty), "empty strings cannot be escape sequences")
-        val litAndSingle = literals & singleKeys
-        val litOrSingle = (literals | singleKeys).map(c => s"$c")
-        val litSingleAndMulti = litOrSingle & multiKeys
-        require(litAndSingle.isEmpty && litSingleAndMulti.isEmpty, "there can be no overlap between literals, singleMap, and multiMap")
-        litOrSingle | multiKeys
+    private [parsley] val escs = locally {
+        val mappingKeys = mapping.keySet
+        val literalsStr = literals.map(c => s"$c")
+        require(mappingKeys.forall(_.nonEmpty), "empty strings cannot be escape sequences")
+        val litAndMapping = literalsStr & mappingKeys
+        require(litAndMapping.isEmpty, "there can be no overlap between literals and mapping")
+        literalsStr | mappingKeys
     }
     // TODO: ensure that at most one numeric sequence has an empty prefix
     private [token] val escTrie = {
-        val escMap = multiMap ++ literals.map(c => s"$c" -> c.toInt) ++ singleMap.map {
-           case (k, v) => s"$k" -> v
-        }
+        val escMap = mapping ++ literals.map(c => s"$c" -> c.toInt)
         val badChar = escMap.find(kv => !Character.isValidCodePoint(kv._2))
         require(badChar.isEmpty, s"Escape characters cannot map to invalid characters: ${badChar.get} is not a valid character")
         Trie(escMap)
@@ -134,8 +128,7 @@ object EscapeDesc {
       * {{{
       * escBegin = '\\'
       * literals = Set('\\')
-      * singleMap = Map.empty
-      * multiMap = Map.empty
+      * mapping = Map.empty
       * decimalEscape = NumericEscape.Illegal
       * hexadecimalEscape = NumericEscape.Illegal
       * octalEscape = NumericEscape.Illegal
@@ -148,8 +141,7 @@ object EscapeDesc {
       */
     val plain = EscapeDesc(escBegin = '\\',
                            literals = Set('\\'),
-                           singleMap = Map.empty,
-                           multiMap = Map.empty,
+                           mapping = Map.empty,
                            decimalEscape = NumericEscape.Illegal,
                            hexadecimalEscape = NumericEscape.Illegal,
                            octalEscape = NumericEscape.Illegal,
@@ -163,50 +155,50 @@ object EscapeDesc {
       */
     val haskell = EscapeDesc(escBegin = '\\',
                              literals = Set('\'', '\"', '\\'),
-                             singleMap = Map('0' -> 0x0000,
-                                             'a' -> 0x0007,
-                                             'b' -> 0x0008,
-                                             'f' -> 0x000c,
-                                             'n' -> 0x000a,
-                                             'r' -> 0x000d,
-                                             't' -> 0x0009,
-                                             'v' -> 0x000b),
-                             multiMap = Map("NUL" -> 0x0000,
-                                            "SOH" -> 0x0001,
-                                            "STX" -> 0x0002,
-                                            "ETX" -> 0x0003,
-                                            "EOT" -> 0x0004,
-                                            "ENQ" -> 0x0005,
-                                            "ACK" -> 0x0006,
-                                            "BEL" -> 0x0007,
-                                            "BS"  -> 0x0008,
-                                            "HT"  -> 0x0009,
-                                            "LF"  -> 0x000a,
-                                            "VT"  -> 0x000b,
-                                            "FF"  -> 0x000c,
-                                            "CR"  -> 0x000d,
-                                            "SO"  -> 0x000e,
-                                            "SI"  -> 0x000f,
-                                            "DLE" -> 0x0010,
-                                            "DC1" -> 0x0011,
-                                            "DC2" -> 0x0012,
-                                            "DC3" -> 0x0013,
-                                            "DC4" -> 0x0014,
-                                            "NAK" -> 0x0015,
-                                            "SYN" -> 0x0016,
-                                            "ETB" -> 0x0017,
-                                            "CAN" -> 0x0018,
-                                            "EM"  -> 0x0019,
-                                            "SUB" -> 0x001a,
-                                            "ESC" -> 0x001b,
-                                            "FS"  -> 0x001c,
-                                            "GS"  -> 0x001d,
-                                            "RS"  -> 0x001e,
-                                            "US"  -> 0x001f,
-                                            "SP"  -> 0x0020,
-                                            "DEL" -> 0x007f) ++
-                                            // Control escape sequences
-                                            ('@' to '_').map(c => s"^$c" -> (c - '@')).toMap,
+                             mapping = Map("0" -> 0x0000,
+                                           "a" -> 0x0007,
+                                           "b" -> 0x0008,
+                                           "f" -> 0x000c,
+                                           "n" -> 0x000a,
+                                           "r" -> 0x000d,
+                                           "t" -> 0x0009,
+                                           "v" -> 0x000b,
+                                           "NUL" -> 0x0000,
+                                           "SOH" -> 0x0001,
+                                           "STX" -> 0x0002,
+                                           "ETX" -> 0x0003,
+                                           "EOT" -> 0x0004,
+                                           "ENQ" -> 0x0005,
+                                           "ACK" -> 0x0006,
+                                           "BEL" -> 0x0007,
+                                           "BS"  -> 0x0008,
+                                           "HT"  -> 0x0009,
+                                           "LF"  -> 0x000a,
+                                           "VT"  -> 0x000b,
+                                           "FF"  -> 0x000c,
+                                           "CR"  -> 0x000d,
+                                           "SO"  -> 0x000e,
+                                           "SI"  -> 0x000f,
+                                           "DLE" -> 0x0010,
+                                           "DC1" -> 0x0011,
+                                           "DC2" -> 0x0012,
+                                           "DC3" -> 0x0013,
+                                           "DC4" -> 0x0014,
+                                           "NAK" -> 0x0015,
+                                           "SYN" -> 0x0016,
+                                           "ETB" -> 0x0017,
+                                           "CAN" -> 0x0018,
+                                           "EM"  -> 0x0019,
+                                           "SUB" -> 0x001a,
+                                           "ESC" -> 0x001b,
+                                           "FS"  -> 0x001c,
+                                           "GS"  -> 0x001d,
+                                           "RS"  -> 0x001e,
+                                           "US"  -> 0x001f,
+                                           "SP"  -> 0x0020,
+                                           "DEL" -> 0x007f) ++
+                                           // Control escape sequences
+                                           ('@' to '_').map(c => s"^$c" -> (c - '@')).toMap,
                              decimalEscape = NumericEscape.Supported(prefix = None, NumberOfDigits.Unbounded, maxValue = Character.MAX_CODE_POINT),
                              hexadecimalEscape = NumericEscape.Supported(prefix = Some('x'), NumberOfDigits.Unbounded, maxValue = Character.MAX_CODE_POINT),
                              octalEscape = NumericEscape.Supported(prefix = Some('o'), NumberOfDigits.Unbounded, maxValue = Character.MAX_CODE_POINT),
@@ -227,11 +219,11 @@ object EscapeDesc {
   */
 final case class TextDesc (escapeSequences: EscapeDesc,
                            characterLiteralEnd: Char,
-                           stringEnds: Set[String],
-                           multiStringEnds: Set[String],
-                           graphicCharacter: CharPredicate) {
-    require(stringEnds.forall(_.nonEmpty), "string ends cannot be empty")
-    require(multiStringEnds.forall(_.nonEmpty), "multiline string ends cannot be empty")
+                           stringEnds: Set[(String, String)],
+                           multiStringEnds: Set[(String, String)],
+                           graphicCharacter: CharPred) {
+    require(stringEnds.forall { case (begin, end) => begin.nonEmpty && end.nonEmpty }, "string ends cannot be empty")
+    require(multiStringEnds.forall { case (begin, end) => begin.nonEmpty && end.nonEmpty }, "multiline string ends cannot be empty")
 }
 
 /** This object contains any preconfigured text definitions.
@@ -244,7 +236,7 @@ object TextDesc {
       * {{{
       * escapeSequences = EscapeDesc.plain
       * characterLiteralEnd = '\''
-      * stringEnds = Set("\"")
+      * stringEnds = Set(("\"", "\""))
       * multiStringEnds = Set.empty
       * graphicCharacter = Unicode(_ >= ' '.toInt)
       * }}}
@@ -253,7 +245,7 @@ object TextDesc {
       */
     val plain = TextDesc(escapeSequences = EscapeDesc.plain,
                          characterLiteralEnd = '\'',
-                         stringEnds = Set("\""),
+                         stringEnds = Set(("\"", "\"")),
                          multiStringEnds = Set.empty,
                          graphicCharacter = Unicode(_ >= ' '.toInt))
 }

@@ -41,7 +41,7 @@ different content. As examples (in isolation of surrounding content):
 
 ```scala mdoc:invisible
 import parsley.token.Lexer
-import parsley.token.predicate.{Basic}
+import parsley.token.Basic
 import parsley.token.descriptions.{LexicalDesc, NameDesc}
 
 val lexer = new Lexer(LexicalDesc.plain.copy(
@@ -75,12 +75,12 @@ Occasionally, there may need to be more fine-grained control over the errors.
 In these cases, the most generic version of the combinator is `verifiedWith`,
 which takes an `ErrorGen` object. For instance, perhaps the focus of the last
 error above should only be the `+`. In which case, the caret must be adjusted by
-an `ErrorGen` object -- this can either be `VanillaGen` or `SpecialisedGen`.
+an `ErrorGen` object -- this can either be `VanillaGen` or `SpecializedGen`.
 
 ```scala mdoc:to-string:nest
-import parsley.errors.SpecialisedGen
+import parsley.errors.SpecializedGen
 val _noPlus = (char('+') ~> int).verifiedWith {
-    new SpecialisedGen[BigInt] {
+    new SpecializedGen[BigInt] {
         def messages(n: BigInt): Seq[String] =
             Seq("a number may not be preceeded by \"+\"")
         override def adjustWidth(x: BigInt, width: Int) = 1

@@ -8,7 +8,7 @@ package parsley.internal.deepembedding.frontend
 import parsley.internal.deepembedding.ContOps, ContOps.{suspend, ContAdapter}
 import parsley.internal.deepembedding.backend, backend.StrictParsley
 
-private [parsley] final class <|>[A](p: LazyParsley[A], q: LazyParsley[A]) extends LazyParsley[A] {
+private [parsley] final class <|>[A](p: LazyParsley[A], q: LazyParsley[A], var debugName: String) extends LazyParsley[A] {
     final override def findLetsAux[M[_, +_]: ContOps, R](seen: Set[LazyParsley[_]])(implicit state: LetFinderState): M[R,Unit] = {
         suspend(p.findLets[M, R](seen)) >> suspend(q.findLets(seen))
     }
@@ -20,13 +20,5 @@ private [parsley] final class <|>[A](p: LazyParsley[A], q: LazyParsley[A]) exten
 
     // $COVERAGE-OFF$
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[A] = visitor.visit(this, context)(p, q)
-
-    // XXX: Subject to change, due to the following:
-    // - "<|>" is going out of style.
-    // - "|" looks odd on its own.
-    // - "orElse" is too wordy.
-    // - "or" does not exist as a combinator.
-    // We cannot think of any better options at the moment.
-    override private [parsley] def prettyName = "<|>"
     // $COVERAGE-ON$
 }

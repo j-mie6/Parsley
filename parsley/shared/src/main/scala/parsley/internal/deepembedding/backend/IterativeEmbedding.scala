@@ -5,7 +5,7 @@
  */
 package parsley.internal.deepembedding.backend
 
-import scala.collection.mutable
+import scala.collection.Factory
 
 import parsley.exceptions.NonProductiveIterationException
 
@@ -15,16 +15,16 @@ import parsley.internal.machine.instructions
 
 import StrictParsley.InstrBuffer
 
-private [deepembedding] final class Many[A](val p: StrictParsley[A]) extends Unary[A, List[A]] {
-    final override def optimise: StrictParsley[List[A]] = p match {
+private [deepembedding] final class Many[A, C](val p: StrictParsley[A], factory: Factory[A, C]) extends Unary[A, C] {
+    final override def optimise: StrictParsley[C] = p match {
         case _: Pure[_] => throw new NonProductiveIterationException("many") // scalastyle:ignore throw
-        case _: MZero   => new Pure(Nil)
+        case _: MZero   => new Pure(factory.newBuilder.result())
         case _          => this
     }
     final override def codeGen[M[_, +_]: ContOps, R](producesResults: Boolean)(implicit instrs: InstrBuffer, state: CodeGenState): M[R, Unit] = {
         val body = state.freshLabel()
         val handler = state.freshLabel()
-        if (producesResults) instrs += new instructions.Fresh(mutable.ListBuffer.empty[Any])
+        if (producesResults) instrs += new instructions.Fresh(factory.newBuilder)
         instrs += new instructions.PushHandler(handler)
         instrs += new instructions.Label(body)
         suspend(p.codeGen[M, R](producesResults)) |> {
@@ -115,19 +115,15 @@ private [deepembedding] final class Chainr[A, B](p: StrictParsley[A], op: Strict
     override def codeGen[M[_, +_]: ContOps, R](producesResults: Boolean)(implicit instrs: InstrBuffer, state: CodeGenState): M[R, Unit]= {
         if (producesResults) {
             val body = state.freshLabel()
-            // handler1 is where the check offset is kept
-            val handler1 = state.getLabel(instructions.Refail)
-            val handler2 = state.freshLabel()
+            val handler = state.freshLabel()
             instrs += new instructions.Push(identity[Any] _)
-            instrs += new instructions.PushHandler(handler1)
             instrs += new instructions.Label(body)
             suspend(p.codeGen[M, R](producesResults=true)) >> {
-                instrs += new instructions.PushHandler(handler2)
+                instrs += new instructions.PushHandler(handler)
                 suspend(op.codeGen[M, R](producesResults=true)) |> {
                     instrs += new instructions.ChainrJump(body)
-                    instrs += new instructions.Label(handler2)
+                    instrs += new instructions.Label(handler)
                     instrs += instructions.ChainrOpHandler(wrap)
-                    if (!producesResults) instrs += instructions.Pop
                 }
             }
         }
@@ -141,23 +137,24 @@ private [deepembedding] final class Chainr[A, B](p: StrictParsley[A], op: Strict
     // $COVERAGE-ON$
 }
 
-private [deepembedding] final class SepEndBy1[A](p: StrictParsley[A], sep: StrictParsley[_]) extends StrictParsley[List[A]] {
+private [deepembedding] final class SepEndBy1[A, C](p: StrictParsley[A], sep: StrictParsley[_], factory: Factory[A, C]) extends StrictParsley[C] {
     def inlinable: Boolean = false
     override def codeGen[M[_, +_]: ContOps, R](producesResults: Boolean)(implicit instrs: InstrBuffer, state: CodeGenState): M[R, Unit] = {
         val body = state.freshLabel()
         val handler1 = state.freshLabel()
         val handler2 = state.freshLabel()
-        instrs += new instructions.Fresh(mutable.ListBuffer.empty[Any])
+        instrs += new instructions.Fresh(factory.newBuilder)
+        instrs += new instructions.Push(false) // this tracks if p has been consumed
         instrs += new instructions.PushHandler(handler1)
         instrs += new instructions.Label(body)
         suspend(p.codeGen[M, R](producesResults = true)) >> {
             instrs += new instructions.PushHandler(handler2)
             suspend(sep.codeGen[M, R](producesResults = false)) |> {
-                instrs += new instructions.SepEndBy1Jump(body)
+                instrs += new instructions.SepEndBy1Jump(body) // will set bool to true
                 instrs += new instructions.Label(handler2)
-                instrs += instructions.SepEndBy1SepHandler
+                instrs += instructions.SepEndBy1SepHandler // ignores bool, it's true
                 instrs += new instructions.Label(handler1)
-                instrs += instructions.SepEndBy1WholeHandler
+                instrs += instructions.SepEndBy1WholeHandler // queries the bool
                 if (!producesResults) instrs += instructions.Pop
             }
         }
@@ -168,10 +165,10 @@ private [deepembedding] final class SepEndBy1[A](p: StrictParsley[A], sep: Stric
 }
 
 // TODO: unify :/
-private [deepembedding] final class ManyUntil[A](val p: StrictParsley[Any]) extends Unary[Any, List[A]] {
+private [deepembedding] final class ManyUntil[A, C](val p: StrictParsley[Any], factory: Factory[A, C]) extends Unary[Any, C] {
     override def codeGen[M[_, +_]: ContOps, R](producesResults: Boolean)(implicit instrs: InstrBuffer, state: CodeGenState): M[R, Unit] = {
         val start = state.freshLabel()
-        instrs += new instructions.Fresh(mutable.ListBuffer.empty[Any])
+        instrs += new instructions.Fresh(factory.newBuilder)
         instrs += new instructions.Label(start)
         suspend(p.codeGen[M, R](producesResults = true)) |> {
             instrs += new instructions.ManyUntil(start)

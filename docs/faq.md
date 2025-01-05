@@ -93,7 +93,7 @@ an unsafe recursive position?
 This error is thrown by the Parsley compiler when Scala would otherwise have thrown a
 `NullPointerException` during what's known as "let-finding". This is the very first phase of the
 pipeline, and, since Parsley does not use `null` _anywhere_ in the front-end, its a symptom of a
-parser having been demanded before its actually been defined. So what does mean for you, the user?
+parser having been demanded before its actually been defined. So what does that mean for you, the user?
 
 Well, unfortunately, Scala doesn't give us any indication about which parser is at fault (and the
 Java 14 Helpful NPEs don't help much either). But here are the possible causes:

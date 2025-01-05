@@ -9,14 +9,12 @@ import scala.annotation.nowarn
 import scala.collection.mutable
 
 import parsley.XAssert._
-import parsley.exceptions.BadLazinessException
 import parsley.state.Ref
 
 import parsley.internal.deepembedding.{Cont, ContOps, Id}, ContOps.{perform, result, ContAdapter}
 import parsley.internal.deepembedding.backend, backend.StrictParsley
+import parsley.internal.diagnostics.NullParserException
 import parsley.internal.machine.instructions, instructions.Instr
-
-import org.typelevel.scalaccompat.annotation.nowarn3
 
 /** This is the root type of the parsley "frontend": it represents a combinator tree
   * where the join-points in the tree (recursive or otherwise) have not been identified
@@ -29,9 +27,6 @@ import org.typelevel.scalaccompat.annotation.nowarn3
 private [parsley] abstract class LazyParsley[+A] private [deepembedding] {
     // Public API
     // $COVERAGE-OFF$
-    // TODO: remove in 5.0
-    /** Denotes this parser is unsafe, which will disable certain law-based optimisations that assume purity. */
-    private [parsley] final def unsafe(): Unit = ()
     /** Force the parser, which eagerly computes its instructions immediately */
     private [parsley] final def force(): Unit = instrs: @nowarn
     /** Denote that this parser is large enough that it might stack-overflow during
@@ -42,14 +37,15 @@ private [parsley] abstract class LazyParsley[+A] private [deepembedding] {
     // $COVERAGE-ON$
 
     // The instructions used to execute this parser along with the number of registers it uses
-    final private [parsley] lazy val (instrs: Array[Instr], numRegs: Int) = computeInstrs
+    final private [parsley] lazy val (instrs: Array[Instr], numRefs: Int) = computeInstrs
 
-    /** This parser is the result of a `flatMap` operation, and as such must perform
-      * callee-save on `numRegs` registers (which belong to its parent)
+    /** This parser is the result of a `flatMap` operation, and as such may need to expand
+      * the refs set. If so, it needs to know what the minimum free slot is according to
+      * the context.
       *
-      * @param numRegs the number of registers the parent uses (these must be saved)
+      * @param minRef the smallest ref we are allowed to allocate to.
       */
-    private [deepembedding] def demandCalleeSave(numRegs: Int): Unit = numRegsUsedByParent = numRegs
+    private [deepembedding] def setMinReferenceAllocation(minRef: Int): Unit = this.minRef = minRef
 
     // Internals
     // To ensure that stack-overflow cannot occur during the processing of particularly
@@ -87,7 +83,7 @@ private [parsley] abstract class LazyParsley[+A] private [deepembedding] {
     final private var cps = false
     final private [deepembedding] def isCps: Boolean = cps
     /** how many registers are used by the ''parent'' of this combinator (this combinator is part of a `flatMap` when this is not -1) */
-    final private var numRegsUsedByParent = -1
+    final private var minRef = -1
 
     /** Computes the instructions associated with this parser as well as the number of
       * registers it requires in a (possibly) stack-safe way.
@@ -119,11 +115,11 @@ private [parsley] abstract class LazyParsley[+A] private [deepembedding] {
                 val usedRefs: Set[Ref[_]] = letFinderState.usedRefs
                 implicit val letMap: LetMap = LetMap(letFinderState.lets, letFinderState.recs)
                 for { sp <- this.optimised } yield {
-                    implicit val state: backend.CodeGenState = new backend.CodeGenState(letFinderState.numRegs)
-                    sp.generateInstructions(numRegsUsedByParent, usedRefs, letMap.bodies)
+                    implicit val state: backend.CodeGenState = new backend.CodeGenState(letFinderState.numRefs)
+                    sp.generateInstructions(minRef, usedRefs, letMap.bodies)
                 }
             }
-        }, letFinderState.numRegs)
+        }, letFinderState.numRefs)
     }
 
     // Pass 1
@@ -140,7 +136,6 @@ private [parsley] abstract class LazyParsley[+A] private [deepembedding] {
       * @param seen the set of all nodes that have previously been seen by the let-finding
       * @param state stores all the information of the let-finding process
       */
-    @throws[BadLazinessException]("if this parser references another parser before it has been initialised")
     final protected [frontend] def findLets[M[_, +_]: ContOps, R](seen: Set[LazyParsley[_]])(implicit state: LetFinderState): M[R, Unit] = {
         state.addPred(this)
         if (seen.contains(this)) result(state.addRec(this))
@@ -153,7 +148,7 @@ private [parsley] abstract class LazyParsley[+A] private [deepembedding] {
             try findLetsAux(seen + this)
             catch {
                 // $COVERAGE-OFF$
-                case _: NullPointerException => throw new BadLazinessException // scalastyle:ignore throw
+                case NullParserException(err) => throw err // scalastyle:ignore throw
                 // $COVERAGE-ON$
             }
         }
@@ -187,7 +182,10 @@ private [parsley] abstract class LazyParsley[+A] private [deepembedding] {
     def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[A]
 
     /** Pretty names for parsers, for internal debugging purposes only. */
-    private [parsley] def prettyName: String
+    private [parsley] var debugName: String
+    private [parsley] def transparent(): Unit = debugName = null
+    private [parsley] def opaque(name: String): Unit = debugName = name
+    private [parsley] def isOpaque: Boolean = debugName != null
 
     /** Pretty-prints a combinator tree, for internal debugging purposes only. */
     final private [internal] def prettyAST: String = {
@@ -214,7 +212,7 @@ private [deepembedding] trait UsesRef {
 private [deepembedding] class LetFinderState {
     private val _recs = mutable.Set.empty[LazyParsley[_]]
     private val _preds = mutable.Map.empty[LazyParsley[_], Int]
-    private val _usedRefs: mutable.Set[Ref[_]] @nowarn3 = mutable.Set.empty[Ref[_]]: @nowarn3
+    private val _usedRefs = mutable.Set.empty[Ref[_]]
 
     /** Adds a "predecessor" to a given parser, which means that it is referenced by another parser.
       *
@@ -236,17 +234,16 @@ private [deepembedding] class LetFinderState {
     /** Has the given parser never been analysed before? */
     private [frontend] def notProcessedBefore(p: LazyParsley[_]): Boolean = _preds(p) == 1
 
-    // TODO: I think this can just drop the !_recs(p) constraint and it'll just work? (check whether recs get a pred bump)
-    /** Returns all the non-recursive parsers which are referenced two or more times across the tree. */
+    /** Returns all the parsers which are referenced two or more times across the tree. */
     private [frontend] def lets: Iterable[LazyParsley[_]] = _preds.toSeq.view.collect {
-        case (p, refs) if refs >= 2 && !_recs(p) => p
-    } ++ recs
+        case (p, refs) if refs >= 2 => p
+    }
     /** Returns all the recursive parsers in the tree */
     private [frontend] lazy val recs: Set[LazyParsley[_]] = _recs.toSet
     /** Returns all the registers used by the parser */
-    private [frontend] def usedRefs: Set[Ref[_]] @nowarn3 = _usedRefs.toSet: @nowarn3
+    private [frontend] def usedRefs: Set[Ref[_]] = _usedRefs.toSet
     /** Returns the number of registers used by the parser */
-    private [frontend] def numRegs: Int = _usedRefs.size
+    private [frontend] def numRefs: Int = _usedRefs.size
 }
 
 /** Represents a map of let-bound lazy parsers to their strict equivalents. */

@@ -6,13 +6,13 @@
 package parsley.token.numeric
 
 import parsley.Parsley, Parsley.atomic
-import parsley.token.descriptions.numeric.NumericDesc
+import parsley.token.descriptions.NumericDesc
 import parsley.token.errors.ErrorConfig
 
 import parsley.internal.deepembedding.Sign.DoubleType
 import parsley.internal.deepembedding.singletons
 
-private [token] final class SignedReal(desc: NumericDesc, unsigned: Real, err: ErrorConfig) extends Real(err) {
+private [token] final class SignedReal(desc: NumericDesc, unsigned: RealParsers, err: ErrorConfig) extends RealParsers(err) {
     private val sign = new Parsley(new singletons.Sign[DoubleType.resultType](DoubleType, desc.positiveSign))
 
     override lazy val _decimal: Parsley[BigDecimal] = atomic(sign <*> err.labelRealDecimalEnd(unsigned._decimal))

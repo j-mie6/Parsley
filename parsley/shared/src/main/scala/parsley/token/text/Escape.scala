@@ -7,7 +7,7 @@ package parsley.token.text
 
 import parsley.Parsley, Parsley.empty
 import parsley.character.char
-import parsley.token.descriptions.text.{EscapeDesc, NumberOfDigits, NumericEscape}
+import parsley.token.descriptions.{EscapeDesc, NumberOfDigits, NumericEscape}
 import parsley.token.errors.{ErrorConfig, NotConfigured}
 import parsley.token.numeric
 
@@ -52,6 +52,7 @@ private [token] class Escape(desc: EscapeDesc, err: ErrorConfig, generic: numeri
     private val binaryEscape = fromDesc(radix = 2, desc.binaryEscape, generic.zeroAllowedBinary(NotConfigured))
     private val numericEscape = decimalEscape <|> hexadecimalEscape <|> octalEscape <|> binaryEscape
     val escapeCode = err.labelEscapeEnd(escMapped <|> numericEscape)
-    val escapeBegin = err.labelEscapeSequence(char(desc.escBegin))
+    val escapeBegin = err.labelEscapeSequence(char(desc.escBegin)).void
+    // do not make atomic
     val escapeChar = escapeBegin *> escapeCode
 }

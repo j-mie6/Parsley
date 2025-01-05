@@ -5,38 +5,38 @@
  */
 package parsley.token.text
 
-import scala.Predef.{String => SString, ArrowAssoc => _, _}
+import scala.Predef.{ArrowAssoc => _, _}
 import parsley.ParsleyTest
 import parsley.token.LexemeImpl
 
-import parsley.token.descriptions.text._
+import parsley.token.descriptions._
 import parsley.token.errors.ErrorConfig
-import parsley.token.predicate._
 import parsley.character.space
 import org.scalactic.source.Position
+import parsley.token.{Basic, Unicode, NotRequired}
 
 class StringTests extends ParsleyTest {
     val errConfig = new ErrorConfig
     val generic = new parsley.token.numeric.Generic(errConfig)
     private def makeString(desc: TextDesc, char: StringCharacter, spaceAllowed: Boolean) =
         new LexemeString(new ConcreteString(desc.stringEnds, char, desc.graphicCharacter, spaceAllowed, errConfig), LexemeImpl.empty)
-    private def makeString(desc: TextDesc): String =
+    private def makeString(desc: TextDesc): StringParsers =
         makeString(desc, new EscapableCharacter(desc.escapeSequences, new Escape(desc.escapeSequences, errConfig, generic), space, errConfig), false)
-    private def makeMultiString(desc: TextDesc): String =
+    private def makeMultiString(desc: TextDesc): StringParsers =
         makeString(desc, new EscapableCharacter(desc.escapeSequences, new Escape(desc.escapeSequences, errConfig, generic), space, errConfig), true)
-    private def makeRawString(desc: TextDesc): String =
+    private def makeRawString(desc: TextDesc): StringParsers =
         makeString(desc, new RawCharacter(errConfig), false)
-    private def makeRawMultiString(desc: TextDesc): String =
+    private def makeRawMultiString(desc: TextDesc): StringParsers =
         makeString(desc, new RawCharacter(errConfig), true)
 
-    def unicodeCases(str: String)(tests: (SString, Option[SString], Position)*): Unit = cases(str.fullUtf16)(tests: _*)
-    def asciiCases(str: String)(tests: (SString, Option[SString], Position)*): Unit = cases(str.ascii)(tests: _*)
-    def extAsciiCases(str: String)(tests: (SString, Option[SString], Position)*): Unit = cases(str.latin1)(tests: _*)
+    def unicodeCases(str: StringParsers)(tests: (String, Option[String], Position)*): Unit = cases(str.fullUtf16)(tests: _*)
+    def asciiCases(str: StringParsers)(tests: (String, Option[String], Position)*): Unit = cases(str.ascii)(tests: _*)
+    def extAsciiCases(str: StringParsers)(tests: (String, Option[String], Position)*): Unit = cases(str.latin1)(tests: _*)
 
     val plain = TextDesc.plain.copy(
         graphicCharacter = Unicode(_ >= ' '),
-        escapeSequences = EscapeDesc.plain.copy(multiMap = Map(("lf", '\n'), ("lam", 'λ'), ("pound", '£'), ("smile", 0x1F642 /*🙂*/))),
-        multiStringEnds = Set("\""),
+        escapeSequences = EscapeDesc.plain.copy(mapping = Map(("lf", '\n'), ("lam", 'λ'), ("pound", '£'), ("smile", 0x1F642 /*🙂*/))),
+        multiStringEnds = Set(("\"", "\"")),
     )
     val plainStr = makeString(plain)
     val plainMultiStr = makeMultiString(plain)
@@ -64,10 +64,10 @@ class StringTests extends ParsleyTest {
         "\"abc\"" -> None,
     )
 
-    they should "allow for change in literal end" in unicodeCases(makeString(plain.copy(stringEnds = Set("@@"))))(
-        "@@@@" -> Some(""),
-        "@@abc@@" -> Some("abc"),
-        "@@" -> None,
+    they should "allow for change in literal end" in unicodeCases(makeString(plain.copy(stringEnds = Set(("@-", "-@")))))(
+        "@--@" -> Some(""),
+        "@-a-c-@" -> Some("a-c"),
+        "@-" -> None,
         "\"\"" -> None,
     )
 

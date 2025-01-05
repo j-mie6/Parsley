@@ -14,7 +14,7 @@ private [parsley] final class Branch[A, B, C](b: LazyParsley[Either[A, B]], p: =
     // $COVERAGE-OFF$
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[C] = visitor.visit(this, context)(b, p, q)
 
-    override private[parsley] def prettyName = "branch"
+    private [parsley] var debugName = "branch"
     // $COVERAGE-ON$
 }
 
@@ -24,7 +24,7 @@ private [parsley] final class If[A](b: LazyParsley[Boolean], p: =>LazyParsley[A]
     // $COVERAGE-OFF$
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[A] = visitor.visit(this, context)(b, p, q)
 
-    override private[parsley] def prettyName = "ifP"
+    private [parsley] var debugName = "ifS"
     // $COVERAGE-ON$
 }
 
@@ -35,7 +35,7 @@ private [parsley] final class Filter[A](p: LazyParsley[A], pred: A => Boolean, e
     // $COVERAGE-OFF$
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[A] = visitor.visit(this, context)(p, pred, err)
 
-    override private[parsley] def prettyName = "filter"
+    private [parsley] var debugName = "filter"
     // $COVERAGE-ON$
 }
 
@@ -46,6 +46,6 @@ private [parsley] final class MapFilter[A, B](p: LazyParsley[A], pred: A => Opti
     // $COVERAGE-OFF$
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[B] = visitor.visit(this, context)(p, pred, err)
 
-    override private[parsley] def prettyName: String = "mapFilter"
+    private [parsley] var debugName: String = "mapFilter"
     // $COVERAGE-ON$
 }

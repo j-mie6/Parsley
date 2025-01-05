@@ -54,25 +54,25 @@ class ErrorConfig {
 
     /** How unsigned decimal integers should be referred to or explained within an error.
       * @since 4.1.0
-      * @note defaults to [[parsley.token.errors.ErrorConfig.labelIntegerUnsignedNumber:* `labelIntegerUnsignedNumber`]]
+      * @note defaults to `labelIntegerUnsignedNumber`
       * @group numeric
       */
     def labelIntegerUnsignedDecimal: LabelWithExplainConfig = labelIntegerUnsignedNumber
     /** How unsigned hexadecimal integers should be referred to or explained within an error.
       * @since 4.1.0
-      * @note defaults to [[parsley.token.errors.ErrorConfig.labelIntegerUnsignedNumber:* `labelIntegerUnsignedNumber`]]
+      * @note defaults to `labelIntegerUnsignedNumber`
       * @group numeric
       */
     def labelIntegerUnsignedHexadecimal: LabelWithExplainConfig = labelIntegerUnsignedNumber
     /** How unsigned octal integers should be referred to or explained within an error.
       * @since 4.1.0
-      * @note defaults to [[parsley.token.errors.ErrorConfig.labelIntegerUnsignedNumber:* `labelIntegerUnsignedNumber`]]
+      * @note defaults to `labelIntegerUnsignedNumber`
       * @group numeric
       */
     def labelIntegerUnsignedOctal: LabelWithExplainConfig = labelIntegerUnsignedNumber
     /** How unsigned binary integers should be referred to or explained within an error.
       * @since 4.1.0
-      * @note defaults to [[parsley.token.errors.ErrorConfig.labelIntegerUnsignedNumber:* `labelIntegerUnsignedNumber`]]
+      * @note defaults to `labelIntegerUnsignedNumber`
       * @group numeric
       */
     def labelIntegerUnsignedBinary: LabelWithExplainConfig = labelIntegerUnsignedNumber
@@ -115,25 +115,25 @@ class ErrorConfig {
 
     /** How signed decimal integers should be referred to or explained within an error.
       * @since 4.1.0
-      * @note defaults to [[parsley.token.errors.ErrorConfig.labelIntegerSignedNumber:* `labelIntegerSignedNumber`]]
+      * @note defaults to `labelIntegerSignedNumber`
       * @group numeric
       */
     def labelIntegerSignedDecimal: LabelWithExplainConfig = labelIntegerSignedNumber
     /** How signed hexadecimal integers should be referred to or explained within an error.
       * @since 4.1.0
-      * @note defaults to [[parsley.token.errors.ErrorConfig.labelIntegerSignedNumber:* `labelIntegerSignedNumber`]]
+      * @note defaults to `labelIntegerSignedNumber`
       * @group numeric
       */
     def labelIntegerSignedHexadecimal: LabelWithExplainConfig = labelIntegerSignedNumber
     /** How signed octal integers should be referred to or explained within an error.
       * @since 4.1.0
-      * @note defaults to [[parsley.token.errors.ErrorConfig.labelIntegerSignedNumber:* `labelIntegerSignedNumber`]]
+      * @note defaults to `labelIntegerSignedNumber`
       * @group numeric
       */
     def labelIntegerSignedOctal: LabelWithExplainConfig = labelIntegerSignedNumber
     /** How signed binary integers should be referred to or explained within an error.
       * @since 4.1.0
-      * @note defaults to [[parsley.token.errors.ErrorConfig.labelIntegerSignedNumber:* `labelIntegerSignedNumber`]]
+      * @note defaults to `labelIntegerSignedNumber`
       * @group numeric
       */
     def labelIntegerSignedBinary: LabelWithExplainConfig = labelIntegerSignedNumber
@@ -363,7 +363,7 @@ class ErrorConfig {
       * @note defaults to a ''specialised'' error describing what the min and max bounds are.
       * @group numeric
       */
-    def filterIntegerOutOfBounds(min: BigInt, max: BigInt, nativeRadix: Int): FilterConfig[BigInt] = new SpecialisedMessage[BigInt] {
+    def filterIntegerOutOfBounds(min: BigInt, max: BigInt, nativeRadix: Int): FilterConfig[BigInt] = new SpecializedMessage[BigInt] {
         def message(n: BigInt) = Seq(s"literal is not within the range ${min.toString(nativeRadix)} to ${max.toString(nativeRadix)}")
     }
 
@@ -373,7 +373,7 @@ class ErrorConfig {
       * @note defaults to a ''specialised'' error stating that the literal is not exactly representable.
       * @group numeric
       */
-    def filterRealNotExact(name: String): FilterConfig[BigDecimal] = new SpecialisedMessage[BigDecimal] {
+    def filterRealNotExact(name: String): FilterConfig[BigDecimal] = new SpecializedMessage[BigDecimal] {
         def message(n: BigDecimal) = Seq(s"literal cannot be represented exactly as an $name")
     }
 
@@ -386,7 +386,7 @@ class ErrorConfig {
       * @group numeric
       */
     def filterRealOutOfBounds(name: String, min: BigDecimal, max: BigDecimal): FilterConfig[BigDecimal] =
-        new SpecialisedMessage[BigDecimal] {
+        new SpecializedMessage[BigDecimal] {
             def message(n: BigDecimal) = Seq(s"literal is not within the range $min to $max and is not an $name")
         }
 
@@ -609,7 +609,7 @@ class ErrorConfig {
       * @note defaults to label of "end of escape sequence" with a reason of "invalid escape sequence"
       * @group text
       */
-    def labelEscapeEnd: LabelWithExplainConfig = LabelAndReason("end of escape sequence", "invalid escape sequence")
+    def labelEscapeEnd: LabelWithExplainConfig = LabelAndReason(reason = "invalid escape sequence", label = "end of escape sequence")
     /** How zero-width escape characters should be referred to within error messages.
       * @since 4.1.0
       * @note defaults to [[NotConfigured `NotConfigured`]]
@@ -659,7 +659,7 @@ class ErrorConfig {
       * @note defaults to a filter generating a ''specialised'' message of "non-ascii characters in string literal, this is not allowed"
       * @group text
       */
-    def filterStringNonAscii: SpecialisedFilterConfig[StringBuilder] = new SpecialisedMessage[StringBuilder] {
+    def filterStringNonAscii: SpecializedFilterConfig[StringBuilder] = new SpecializedMessage[StringBuilder] {
         def message(@unused s: StringBuilder) = Seq("non-ascii characters in string literal, this is not allowed")
     }
 
@@ -668,7 +668,7 @@ class ErrorConfig {
       * @note defaults to a filter generating a ''specialised'' message of "non-latin1 characters in string literal, this is not allowed"
       * @group text
       */
-    def filterStringNonLatin1: SpecialisedFilterConfig[StringBuilder] = new SpecialisedMessage[StringBuilder] {
+    def filterStringNonLatin1: SpecializedFilterConfig[StringBuilder] = new SpecializedMessage[StringBuilder] {
         def message(@unused s: StringBuilder) = Seq("non-latin1 characters in string literal, this is not allowed")
     }
 
@@ -680,8 +680,8 @@ class ErrorConfig {
       * @note defaults to a ''specialised'' message describing how many digits are required but how many were present.
       * @group text
       */
-    def filterEscapeCharRequiresExactDigits(@unused radix: Int, needed: Seq[Int]): SpecialisedFilterConfig[Int] =
-        new SpecialisedMessage[Int] {
+    def filterEscapeCharRequiresExactDigits(@unused radix: Int, needed: Seq[Int]): SpecializedFilterConfig[Int] =
+        new SpecializedMessage[Int] {
             def message(got: Int) = {
                 assume(needed.nonEmpty, "cannot be empty!")
                 val Some(formatted) = parsley.errors.helpers.disjunct(needed.toList.map(_.toString), oxfordComma = true): @unchecked
@@ -696,8 +696,8 @@ class ErrorConfig {
       * @note defaults to a ''specialised'' message stating if the character is larger than the given maximum, or just an illegal codepoint otherwise.
       * @group text
       */
-    def filterEscapeCharNumericSequenceIllegal(maxEscape: Int, radix: Int): SpecialisedFilterConfig[BigInt] =
-        new SpecialisedMessage[BigInt] {
+    def filterEscapeCharNumericSequenceIllegal(maxEscape: Int, radix: Int): SpecializedFilterConfig[BigInt] =
+        new SpecializedMessage[BigInt] {
             def message(escapeChar: BigInt) = Seq(
                 if (escapeChar > BigInt(maxEscape)) {
                     s"${escapeChar.toString(radix)} is greater than the maximum character value of ${BigInt(maxEscape).toString(radix)}"
@@ -721,103 +721,15 @@ class ErrorConfig {
       */
     def verifiedStringBadCharsUsedInLiteral: VerifiedBadChars = Unverified
 
-    /** Gives names to punctuation if it is otherwise unspecified.
+    /** Gives names and/or reasons to symbols.
       *
-      * Symbols that do not appear in the map are unlabelled. When a symbol
-      * is mapped to `None`, this indicates that it should be hidden from errors.
-      * Otherwise, a mapping to `Some` will relabel the error.
+      * Symbols that do not appear in the map are assumed to be `NotConfigured`.
       *
-      * @since 4.5.0
+      * @since 5.0.0
       * @note defaults to the empty map
       * @group symbol
       */
-    def labelSymbolPunctuation: Map[String, Option[String]] = Map.empty
-
-    /** How to refer to a `;` symbol in an error message.
-      * @since 4.1.0
-      * @note defaults to "semicolon"
-      * @group symbol
-      */
-    def labelSymbolSemi: LabelConfig = Label("semicolon")
-    /** How to refer to a `,` symbol in an error message.
-      * @since 4.1.0
-      * @note defaults to "comma"
-      * @group symbol
-      */
-    def labelSymbolComma: LabelConfig = Label("comma")
-    /** How to refer to a `:` symbol in an error message.
-      * @since 4.1.0
-      * @note defaults to "colon"
-      * @group symbol
-      */
-    def labelSymbolColon: LabelConfig = Label("colon")
-    /** How to refer to a `.` symbol in an error message.
-      * @since 4.1.0
-      * @note defaults to "dot"
-      * @group symbol
-      */
-    def labelSymbolDot: LabelConfig = Label("dot")
-    /** How to refer to a `(` symbol in an error message.
-      * @since 4.1.0
-      * @note defaults to "open parenthesis"
-      * @group symbol
-      */
-    def labelSymbolOpenParen: LabelConfig = Label("open parenthesis")
-    /** How to refer to a `{` symbol in an error message.
-      * @since 4.1.0
-      * @note defaults to "open brace"
-      * @group symbol
-      */
-    def labelSymbolOpenBrace: LabelConfig = Label("open brace")
-    /** How to refer to a `[` symbol in an error message.
-      * @since 4.1.0
-      * @note defaults to "open square bracket"
-      * @group symbol
-      */
-    def labelSymbolOpenSquare: LabelConfig = Label("open square bracket")
-    /** How to refer to a `<` symbol in an error message.
-      * @since 4.1.0
-      * @note defaults to "open angle bracket"
-      * @group symbol
-      */
-    def labelSymbolOpenAngle: LabelConfig = Label("open angle bracket")
-    /** How to refer to a `)` symbol in an error message.
-      * @since 4.1.0
-      * @note defaults to "closing parenthesis"
-      * @group symbol
-      */
-    def labelSymbolClosingParen: LabelConfig = Label("closing parenthesis")
-    /** How to refer to a `}` symbol in an error message.
-      * @since 4.1.0
-      * @note defaults to "closing brace"
-      * @group symbol
-      */
-    def labelSymbolClosingBrace: LabelConfig = Label("closing brace")
-    /** How to refer to a `]` symbol in an error message.
-      * @since 4.1.0
-      * @note defaults to "closing square bracket"
-      * @group symbol
-      */
-    def labelSymbolClosingSquare: LabelConfig = Label("closing square bracket")
-    /** How to refer to a `>` symbol in an error message.
-      * @since 4.1.0
-      * @note defaults to "closing angle bracket"
-      * @group symbol
-      */
-    def labelSymbolClosingAngle: LabelConfig = Label("closing angle bracket")
-    //TODO: In future, we want to add LabelWithExplain config here: to do that, introduce an explainSymbolKeyword and merge with a private verson
-    /** How a given keyword should be described in an error message.
-      * @since 4.1.0
-      * @note defaults to labelling with the symbol itself
-      * @group symbol
-      */
-    def labelSymbolKeyword(symbol: String): LabelConfig = Label(symbol)
-    /** How a given operator should be described in an error message.
-      * @since 4.1.0
-      * @note defaults to labelling with the symbol itself
-      * @group symbol
-      */
-    def labelSymbolOperator(symbol: String): LabelConfig = Label(symbol)
+    def labelSymbol: Map[String, LabelWithExplainConfig] = Map.empty
     // To unify, or not to unify
     private [parsley] def defaultSymbolKeyword: Labeller = Label
     private [parsley] def defaultSymbolOperator: Labeller = Label
@@ -848,29 +760,4 @@ class ErrorConfig {
       * @group space
       */
     def labelSpaceEndOfMultiComment: LabelWithExplainConfig = Label("end of comment")
-}
-
-/** Some possible defaults for the `ErrorConfig`.
-  *
-  * @since 4.5.0
-  */
-object ErrorConfig {
-    /** Can be used as part of `labelSymbolPunctuation` to give names to common punctuation
-      * their english name counterpart.
-      * @since 4.5.0
-      */
-    val englishPunctuation: Map[String, Option[String]] = Map(
-        "," -> Some("comma"),
-        "." -> Some("dot"),
-        ";" -> Some("semicolon"),
-        ":" -> Some("colon"),
-        "(" -> Some("open parenthesis"),
-        ")" -> Some("closing parenthesis"),
-        "[" -> Some("open bracket"),
-        "]" -> Some("closing bracket"),
-        "{" -> Some("open brace"),
-        "}" -> Some("closing brace"),
-        "<" -> Some("open angle bracket"),
-        ">" -> Some("closing angle bracket")
-    )
 }

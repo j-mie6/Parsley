@@ -52,7 +52,7 @@ sealed trait Expr
 case class Add(x: Expr, y: Num) extends Expr
 case class Num(n: Int) extends Expr
 
-lazy val expr = infix.left1(num, "+".as(Add(_, _)))
+lazy val expr = infix.left1(num)("+".as(Add(_, _)))
 lazy val num = digit.foldLeft1(0)((n, d) => n * 10 + d.asDigit).map(Num(_))
 expr.parse("56+43+123")
 ```
@@ -62,7 +62,7 @@ left,  but `Num` must appear on the right. As `Num` and `Add`
 share a common supertype `Expr`, this is what the chains will return. To illustrate what happens if `right1` was used instead:
 
 ```scala mdoc:fail
-lazy val badExpr = infix.right1(num, "+".as(Add(_, _)))
+lazy val badExpr = infix.right1(num)("+".as(Add(_, _)))
 ```
 
 Notice that the error message here refers to the type `(A, C) => B`. In practice, to help reduce type ascriptions, the explicit `C >: B` is used as well -- in the working example, `C` is `Expr`, `A` is `Num`, and `B` is `Add`. The wrap is actually `A => C`, which in this case is provided by `Num <:< Expr`.

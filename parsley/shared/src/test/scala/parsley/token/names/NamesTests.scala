@@ -12,10 +12,10 @@ import parsley.token.LexemeImpl._
 import parsley.token.errors.ErrorConfig
 
 import parsley.token.descriptions._
-import parsley.token.predicate._
 import parsley.character.spaces
 import parsley.{TestError, VanillaError, Named}
 import org.scalactic.source.Position
+import parsley.token.{Unicode, NotRequired, CharPred, Basic}
 
 class NamesTests extends ParsleyTest {
     val errConfig = new ErrorConfig
@@ -26,19 +26,19 @@ class NamesTests extends ParsleyTest {
 
     val plainNames = makeSymbol(plainName, plainSym)
 
-    def identCases(start: CharPredicate, letter: CharPredicate, sensitive: Boolean = true)(tests: (String, Option[String], Position)*): Unit = {
+    def identCases(start: CharPred, letter: CharPred, sensitive: Boolean = true)(tests: (String, Option[String], Position)*): Unit = {
         cases(makeSymbol(plainName.copy(identifierStart = start, identifierLetter = letter), plainSym.copy(caseSensitive = sensitive)).identifier)(tests: _*)
     }
 
-    def opCases(start: CharPredicate, letter: CharPredicate)(tests: (String, Option[String], Position)*): Unit = {
+    def opCases(start: CharPred, letter: CharPred)(tests: (String, Option[String], Position)*): Unit = {
         cases(makeSymbol(plainName.copy(operatorStart = start, operatorLetter = letter), plainSym).userDefinedOperator)(tests: _*)
     }
 
-    def identCases(start: CharPredicate, letter: CharPredicate, refStart: CharPredicate)(tests: (String, Option[String], Position)*): Unit = {
+    def identCases(start: CharPred, letter: CharPred, refStart: CharPred)(tests: (String, Option[String], Position)*): Unit = {
         cases(makeSymbol(plainName.copy(identifierStart = start, identifierLetter = letter), plainSym).identifier(refStart))(tests: _*)
     }
 
-    def opCases(start: CharPredicate, letter: CharPredicate, refStart: CharPredicate, refEnd: CharPredicate)(tests: (String, Option[String], Position)*): Unit = {
+    def opCases(start: CharPred, letter: CharPred, refStart: CharPred, refEnd: CharPred)(tests: (String, Option[String], Position)*): Unit = {
         cases(makeSymbol(plainName.copy(operatorStart = start, operatorLetter = letter), plainSym).userDefinedOperator(refStart, refEnd))(tests: _*)
     }
 
@@ -49,13 +49,13 @@ class NamesTests extends ParsleyTest {
             "hi" -> Some("hi"),
             "x7" -> Some("x7"),
         )
-        identCases(Unicode(Character.isAlphabetic), Unicode(Character.isLetterOrDigit))(
+        identCases(Unicode(Character.isAlphabetic(_)), Unicode(Character.isLetterOrDigit(_)))(
             "hello1" -> Some("hello1"),
             "7f" -> None,
             "hi" -> Some("hi"),
             "x7" -> Some("x7"),
         )
-        identCases(Basic(_.isLetter), Unicode(Character.isDigit))(
+        identCases(Basic(_.isLetter), Unicode(Character.isDigit(_)))(
             "hello1" -> None,
             "7f" -> None,
             "7" -> None,
@@ -67,7 +67,7 @@ class NamesTests extends ParsleyTest {
             "🙂i" -> Some("🙂i"),
             "🙂7" -> Some("🙂7"),
         )
-        identCases(Unicode(Character.isAlphabetic), NotRequired)(
+        identCases(Unicode(Character.isAlphabetic(_)), NotRequired)(
             "x" -> Some("x"),
             "y" -> Some("y"),
             "hi" -> None,

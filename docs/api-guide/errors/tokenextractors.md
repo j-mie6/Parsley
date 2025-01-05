@@ -30,15 +30,11 @@ the bad input was found; the second is the amount of input
 the parser tried to read when it failed; and `lexicalError`
 denotes whether or not the failure happened whilst trying
 to parse a token from `Lexer`, or not. The return value,
-`Token`, is one of the following classes:
+of type `Token`, is one of the following classes:
 
 ```scala
-case class Named(name: String, span: TokenSpan) extends Token
+case class Named(name: String, span: Int) extends Token
 case class Raw(tok: String) extends Token
-
-sealed trait TokenSpan
-case class Spanning(line: Int, col: Int) extends TokenSpan
-case class Width(w: Int) extends TokenSpan
 ```
 
 A `Raw` token indicates no further processing of the input could
@@ -46,10 +42,6 @@ occur to get a better token, and some is returned verbatim.
 Otherwise, a `Named` token can replace a raw token with something
 derived from the input -- the `span` here denotes how wide that
 token had been determined to be.
-
-@:callout(warning)
-The `Spanning` class will be removed in `parsley:5.0.0`: in future, the width will be in `Named` directly.
-@:@
 
 The idea is that `unexpectedToken` should examine the provided
 arguments and determine if a more specific token can be extracted
@@ -132,7 +124,7 @@ trait LexToken {
     def extractItem(cs: Iterable[Char], amountOfInputParserWanted: Int): Token = {
         SingleChar.unexpectedToken(cs)
     }
-    def selectToken(matchedToks: List[(String, (Int, Int))]): (String, (Int, Int)) = {
+    def selectToken(matchedToks: List[(String, Int)]): (String, Int) = {
         matchedToks.maxBy(_._2)
     }
 }

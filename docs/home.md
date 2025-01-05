@@ -26,7 +26,7 @@ nicely!
 
 ## Contributing
 Users are welcome to contribute to this wiki themselves. Unlike GitHub's wiki, the source
-can be found at <https://github.com/j-mie6/parsley/tree/master/docs>, in Markdown files
+can be found at <https://github.com/j-mie6/parsley/tree/staging/5.0/docs>, in Markdown files
 augmented using the [Laika](https://typelevel.org/Laika/) framework. This allows for some
 extra non-standard directives to be used. Have a look at other wiki pages to get a sense for
 how things should work. Feel free to then make a PR with your changes 🙂.

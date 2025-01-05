@@ -6,7 +6,7 @@
 package parsley.token.text
 
 import parsley.Parsley
-import parsley.token.predicate.{Basic, CharPredicate, NotRequired, Unicode}
+import parsley.token.{Basic, CharPred, NotRequired, Unicode}
 
 /** This class defines a uniform interface for defining parsers for character
   * literals, independent of how whitespace should be handled after the literal.
@@ -20,7 +20,7 @@ import parsley.token.predicate.{Basic, CharPredicate, NotRequired, Unicode}
   *   `Lexer`, which will depend on user-defined configuration. Please see the
   *   relevant documentation of these specific objects.
   */
-abstract class Character private[text] {
+abstract class CharacterParsers private[text] {
     /** This parser will parse a single character literal, which may contain
       * any unicode graphic character as defined by up to two UTF-16 codepoints.
       * It may also contain escape sequences.
@@ -103,24 +103,16 @@ abstract class Character private[text] {
     def latin1: Parsley[Char]
 }
 
-private [text] object Character {
-    final val MaxAscii: Int = 0x7f
-    final val MaxLatin1: Int = 0xff
+private [text] object CharacterParsers {
+    final val MaxAscii = 0x7f
+    final val MaxLatin1 = 0xff
 
-    def letter(terminalLead: Char, allowsAllSpace: Boolean, isGraphic: CharPredicate): CharPredicate = isGraphic match {
+    def letter(terminalLead: Char, allowsAllSpace: Boolean, isGraphic: CharPred): CharPred = isGraphic match {
         case Unicode(g) if allowsAllSpace => Unicode(c => c != terminalLead.toInt && (g(c) || c.toChar.isWhitespace))
         case Unicode(g)                   => Unicode(c => c != terminalLead.toInt && g(c))
         case Basic(g) if allowsAllSpace   => Basic(c => c != terminalLead && (g(c) || c.toChar.isWhitespace))
         case Basic(g)                     => Basic(c => c != terminalLead && g(c))
         case NotRequired                  => NotRequired
-    }
-
-    def letter(terminalLead: Char, escapeLead: Char, allowsAllSpace: Boolean, isGraphic: CharPredicate): CharPredicate = {
-        letter(terminalLead, allowsAllSpace, isGraphic) match {
-            case Unicode(g)  => Unicode(c => c != escapeLead.toInt && g(c))
-            case Basic(g)    => Basic(c => c != escapeLead && g(c))
-            case NotRequired => NotRequired
-        }
     }
 
     @inline def isBmpCodePoint(codepoint: Int): Boolean = java.lang.Character.isBmpCodePoint(codepoint)

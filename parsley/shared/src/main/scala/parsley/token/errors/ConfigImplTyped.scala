@@ -17,7 +17,7 @@ import org.typelevel.scalaccompat.annotation.unused
   * @since 4.1.0
   * @group filters
   */
-trait FilterConfig[A] {
+sealed trait FilterConfig[A] {
     private [parsley] def filter(p: Parsley[A])(f: A => Boolean): Parsley[A]
     private [parsley] def mkError(offset: Int, line: Int, col: Int, caretWidth: Int, x: A): DefuncError
     // $COVERAGE-OFF$
@@ -29,22 +29,22 @@ trait FilterConfig[A] {
 }
 
 /** This subtrait of `FilterConfig` specifies that only filters generating ''specialised'' errors may be used.
-  * @since 4.1.0
+  * @since 5.0.0
   * @group filters
   */
-trait SpecialisedFilterConfig[A] extends FilterConfig[A]
+sealed trait SpecializedFilterConfig[A] extends FilterConfig[A]
 /** This subtrait of `FilterConfig` specifies that only filters generating ''vanilla'' errors may be used.
   * @since 4.1.0
   * @group filters
   */
-trait VanillaFilterConfig[A] extends FilterConfig[A]
+sealed trait VanillaFilterConfig[A] extends FilterConfig[A]
 
 /** This class ensures that the filter will generate ''specialised'' messages for the given failing parse.
-  * @since 4.1.0
+  * @since 5.0.0
   * @group filters
   */
-abstract class SpecialisedMessage[A] extends SpecialisedFilterConfig[A] { self =>
-    @deprecated("filters do not have partial amend semantics, so this does nothing", "4.1.0")  def this(@unused fullAmend: Boolean) = this()
+abstract class SpecializedMessage[A] extends SpecializedFilterConfig[A] { self =>
+    private def this(@unused fullAmend: Boolean) = this()
     /** This method produces the messages for the given value.
       * @since 4.1.0
       * @group badchar
@@ -60,19 +60,19 @@ abstract class SpecialisedMessage[A] extends SpecialisedFilterConfig[A] { self =
     }
 
     // $COVERAGE-OFF$
-    private [parsley] final override def injectLeft[B] = new SpecialisedMessage[Either[A, B]] {
+    private [parsley] final override def injectLeft[B] = new SpecializedMessage[Either[A, B]] {
         def message(xy: Either[A, B]) = {
             val Left(x) = xy: @unchecked
             self.message(x)
         }
     }
-    private [parsley] final override def injectRight[B] = new SpecialisedMessage[Either[B, A]] {
+    private [parsley] final override def injectRight[B] = new SpecializedMessage[Either[B, A]] {
         def message(xy: Either[B, A]) = {
             val Right(y) = xy: @unchecked
             self.message(y)
         }
     }
-    private [parsley] final override def injectSnd[B] = new SpecialisedMessage[(B, A)] {
+    private [parsley] final override def injectSnd[B] = new SpecializedMessage[(B, A)] {
         def message(xy: (B, A)) = self.message(xy._2)
     }
     // $COVERAGE-ON$
@@ -83,7 +83,7 @@ abstract class SpecialisedMessage[A] extends SpecialisedFilterConfig[A] { self =
   * @group filters
   */
 abstract class Unexpected[A] extends VanillaFilterConfig[A] { self =>
-    @deprecated("filters do not have partial amend semantics, so this does nothing", "4.1.0")  def this(@unused fullAmend: Boolean) = this()
+    private def this(@unused fullAmend: Boolean) = this()
     /** This method produces the unexpected label for the given value.
       * @since 4.1.0
       * @group badchar
@@ -121,7 +121,7 @@ abstract class Unexpected[A] extends VanillaFilterConfig[A] { self =>
   * @group filters
   */
 abstract class Because[A] extends VanillaFilterConfig[A] { self =>
-    @deprecated("filters do not have partial amend semantics, so this does nothing", "4.1.0")  def this(@unused fullAmend: Boolean) = this()
+    private def this(@unused fullAmend: Boolean) = this()
     /** This method produces the reason for the given value.
       * @since 4.1.0
       * @group badchar
@@ -159,7 +159,7 @@ abstract class Because[A] extends VanillaFilterConfig[A] { self =>
   * @group filters
   */
 abstract class UnexpectedBecause[A] extends VanillaFilterConfig[A] { self =>
-    @deprecated("filters do not have partial amend semantics, so this does nothing", "4.1.0")  def this(@unused fullAmend: Boolean) = this()
+    private def this(@unused fullAmend: Boolean) = this()
     /** This method produces the unexpected label for the given value.
       * @since 4.1.0
       * @group badchar
@@ -210,7 +210,7 @@ abstract class UnexpectedBecause[A] extends VanillaFilterConfig[A] { self =>
   * @since 4.1.0
   * @group filters
   */
-final class BasicFilter[A] extends SpecialisedFilterConfig[A] with VanillaFilterConfig[A] {
+final class BasicFilter[A] extends SpecializedFilterConfig[A] with VanillaFilterConfig[A] {
     private [parsley] final override def filter(p: Parsley[A])(f: A => Boolean) = p.filter(f)
     private [parsley] final override def collect[B](p: Parsley[A])(f: PartialFunction[A, B]) = p.collect(f)
     private [parsley] final override def mkError(offset: Int, line: Int, col: Int, caretWidth: Int, @unused x: A): DefuncError = {

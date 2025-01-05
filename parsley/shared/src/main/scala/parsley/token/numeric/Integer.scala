@@ -6,7 +6,7 @@
 package parsley.token.numeric
 
 import parsley.Parsley
-import parsley.token.descriptions.numeric.NumericDesc
+import parsley.token.descriptions.NumericDesc
 import parsley.token.errors.{ErrorConfig, LabelWithExplainConfig}
 
 /** This class defines a uniform interface for defining parsers for integer
@@ -31,7 +31,7 @@ import parsley.token.errors.{ErrorConfig, LabelWithExplainConfig}
   *   accounts for unsignedness when necessary.
   * @define bounded4 the desired type of the result, defaulting to
   */
-abstract class Integer private[numeric] (private [numeric] val desc: NumericDesc) {
+abstract class IntegerParsers private[numeric] (private [numeric] val desc: NumericDesc) {
     /** This parser will parse a single integer literal, which is in decimal form (base 10).
       *
       * @example {{{

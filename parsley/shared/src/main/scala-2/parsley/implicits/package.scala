@@ -12,4 +12,4 @@ package parsley
   * Automatic conversion to `Parsley[Unit]` is also supported within this package.
   *
   */
-package object implicits
+package object syntax

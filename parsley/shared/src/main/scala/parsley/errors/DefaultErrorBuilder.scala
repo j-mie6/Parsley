@@ -5,6 +5,8 @@
  */
 package parsley.errors
 
+import org.typelevel.scalaccompat.annotation.unused
+
 // Turn coverage off, because the tests have their own error builder
 // We might want to test this on its own though
 // $COVERAGE-OFF$
@@ -21,9 +23,9 @@ package parsley.errors
   */
 abstract class DefaultErrorBuilder extends ErrorBuilder[String] {
     /** @inheritdoc */
-    override def format(pos: Position, source: Source, lines: ErrorInfoLines): String = DefaultErrorBuilder.format(pos, source, lines)
+    override def build(pos: Position, source: Source, lines: ErrorInfoLines): String = DefaultErrorBuilder.build(pos, source, lines)
 
-    //override def format(pos: Position, source: Source, ctxs: NestedContexts, lines: ErrorInfoLines): String = {
+    //override def build(pos: Position, source: Source, ctxs: NestedContexts, lines: ErrorInfoLines): String = {
     //    DefaultErrorBuilder.blockError(header = s"${DefaultErrorBuilder.mergeScopes(source, ctxs)}$pos", lines, indent = 2)"
     //}
 
@@ -48,7 +50,7 @@ abstract class DefaultErrorBuilder extends ErrorBuilder[String] {
         DefaultErrorBuilder.vanillaError(unexpected, expected, reasons, lines)
     }
     /** @inheritdoc */
-    override def specialisedError(msgs: Messages, lines: LineInfo): ErrorInfoLines = DefaultErrorBuilder.specialisedError(msgs, lines)
+    override def specializedError(msgs: Messages, lines: LineInfo): ErrorInfoLines = DefaultErrorBuilder.specializedError(msgs, lines)
 
     /** @inheritdoc */
     type ExpectedItems = Option[String]
@@ -81,8 +83,8 @@ abstract class DefaultErrorBuilder extends ErrorBuilder[String] {
     /** @inheritdoc */
     override val numLinesAfter = DefaultErrorBuilder.NumLinesAfter
     /** @inheritdoc */
-    override def lineInfo(line: String, linesBefore: Seq[String], linesAfter: Seq[String], errorPointsAt: Int, errorWidth: Int): LineInfo = {
-        DefaultErrorBuilder.lineInfo(line, linesBefore, linesAfter, errorPointsAt, errorWidth)
+    override def lineInfo(line: String, linesBefore: Seq[String], linesAfter: Seq[String], lineNum: Int, errorPointsAt: Int, errorWidth: Int): LineInfo = {
+        DefaultErrorBuilder.lineInfo(line, linesBefore, linesAfter, lineNum, errorPointsAt, errorWidth)
     }
 
     /** @inheritdoc */
@@ -117,7 +119,7 @@ object DefaultErrorBuilder {
       *
       * @since 4.3.0
       */
-    def format(pos: String, source: Option[String], lines: Seq[String]): String = {
+    def build(pos: String, source: Option[String], lines: Seq[String]): String = {
         blockError(header = s"${source.fold("")(name => s"In $name ")}$pos", lines, indent = 2)
     }
     /** If the `sourceName` exists, wraps it in quotes and adds `file` onto the front.
@@ -133,12 +135,12 @@ object DefaultErrorBuilder {
     def vanillaError(unexpected: Option[String], expected: Option[String], reasons: Iterable[String], lines: Seq[String]): Seq[String] = {
         DefaultErrorBuilder.combineInfoWithLines(Seq.concat(unexpected, expected, reasons), lines)
     }
-    /** Forms a specialised error by combining all components in sequence, if there are no `msgs`, then
+    /** Forms a specialized error by combining all components in sequence, if there are no `msgs`, then
       * [[Unknown `Unknown`]] is used instead.
       *
       * @since 4.3.0
       */
-    def specialisedError(msgs: Seq[String], lines: Seq[String]): Seq[String] = DefaultErrorBuilder.combineInfoWithLines(msgs, lines)
+    def specializedError(msgs: Seq[String], lines: Seq[String]): Seq[String] = DefaultErrorBuilder.combineInfoWithLines(msgs, lines)
 
     /** Forms an error with the given `header` followed by a colon, a newline, then the remainder of the lines indented.
       *
@@ -229,7 +231,7 @@ object DefaultErrorBuilder {
       *
       * @since 4.3.0
       */
-    def lineInfo(line: String, linesBefore: Seq[String], linesAfter: Seq[String], errorPointsAt: Int, errorWidth: Int): Seq[String] = {
+    def lineInfo(line: String, linesBefore: Seq[String], linesAfter: Seq[String], @unused lineNum: Int, errorPointsAt: Int, errorWidth: Int): Seq[String] = {
         Seq.concat(linesBefore.map(inputLine), Seq(inputLine(line), caretLine(errorPointsAt, errorWidth)), linesAfter.map(inputLine))
     }
 

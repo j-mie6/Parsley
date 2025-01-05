@@ -12,8 +12,7 @@ import parsley.combinator.ifS
 import parsley.lift._
 import parsley.character.{char, satisfy, digit, item, string}
 import parsley.syntax.character.{charLift, stringLift}
-import parsley.syntax.lift.Lift1
-import parsley.syntax.zipped.Zipped2
+import parsley.syntax.all._
 import parsley.state._
 import parsley.errors.combinator.{fail => pfail}
 
@@ -396,10 +395,10 @@ class CoreTests extends ParsleyTest {
     "flatMap" should "consistently generate a callee-save instruction if needed" in {
         import parsley.state._
         val r = Ref.make[Int]
-        val p = pure(7).flatMap { _ =>
-            r.set(4) *> r.get
+        val p = unit.flatMap { _ =>
+            r.update(_ + 1) *> r.get
         }
-        (p *> p).parse("") shouldBe Success(4)
+        (unit.flatMap(_ => r.set(0)) *> p *> p).parse("") shouldBe Success(2)
     }
 
     "span" should "return all the input parsed by a parser, exactly as it was" in {

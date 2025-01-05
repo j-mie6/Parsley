@@ -7,26 +7,30 @@ package parsley.token.symbol
 
 import Predef.{ArrowAssoc => _, _}
 
-import parsley.{Parsley, ParsleyTest}
+import parsley._
 import parsley.token.LexemeImpl._
 
 import parsley.token.descriptions._
 import parsley.token.errors.ErrorConfig
-import parsley.token.predicate._, implicits.Basic.charToBasic, implicits.Unicode.funToUnicode
 import parsley.character.{spaces, string}
 import org.scalactic.source.Position
+import parsley.token.{Basic, Unicode}
 
 class SymbolTests extends ParsleyTest {
-    val errConfig = new ErrorConfig
-    def makeSymbol(nameDesc: NameDesc, symDesc: SymbolDesc): Symbol = new LexemeSymbol(new ConcreteSymbol(nameDesc, symDesc, errConfig), spaces, errConfig)
+    val errConfig = new ErrorConfig {
+        override def labelSymbol = Map(
+            ("keyword", parsley.token.errors.Reason("bla bla"))
+        )
+    }
+    def makeSymbol(nameDesc: NameDesc, symDesc: SymbolDesc): Symbol = new LexemeSymbol(new ConcreteSymbol(nameDesc, symDesc, errConfig), spaces)
 
-    val plainName = NameDesc.plain.copy(identifierLetter = Basic(_.isLetter), operatorLetter = ':')
+    val plainName = NameDesc.plain.copy(identifierLetter = Basic(_.isLetter), operatorLetter = Basic(':'))
     val plainSym = SymbolDesc.plain.copy(hardKeywords = Set("keyword", "hard"), hardOperators = Set("+", "<", "<="))
 
     val plainSymbol = makeSymbol(plainName, plainSym)
-    val unicodeSymbol = makeSymbol(plainName.copy(identifierLetter = Character.isAlphabetic(_)), plainSym)
+    val unicodeSymbol = makeSymbol(plainName.copy(identifierLetter = Unicode(Character.isAlphabetic(_))), plainSym)
     val caseInsensitive = makeSymbol(plainName, plainSym.copy(caseSensitive = false))
-    val caseInsensitiveUni = makeSymbol(plainName.copy(identifierLetter = Character.isAlphabetic(_)), plainSym.copy(caseSensitive = false))
+    val caseInsensitiveUni = makeSymbol(plainName.copy(identifierLetter = Unicode(Character.isAlphabetic(_))), plainSym.copy(caseSensitive = false))
 
     def boolCases(p: Parsley[Unit])(tests: (String, Boolean, Position)*): Unit = cases(p, noEof = true)(tests.map { case (i, r, pos) => (i, if (r) Some(()) else None, pos) }: _*)
     def namedCases(sym: String => Parsley[Unit])(ktests: (String, Seq[(String, Boolean, Position)])*): Unit = {

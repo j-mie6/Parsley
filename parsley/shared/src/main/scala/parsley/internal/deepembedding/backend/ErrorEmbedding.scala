@@ -10,24 +10,25 @@ import parsley.token.errors.Label
 import parsley.internal.deepembedding.singletons._
 import parsley.internal.machine.instructions
 
-private [deepembedding] final class ErrorLabel[A](val p: StrictParsley[A], private val labels: scala.Seq[String]) extends ScopedUnary[A, A] {
+private [deepembedding] final class ErrorLabel[A](val p: StrictParsley[A], private val label: String, private val labels: scala.Seq[String])
+    extends ScopedUnary[A, A] {
     override def setup(label: Int): instructions.Instr = new instructions.PushHandler(label) // was AndClearHints
-    override def instr: instructions.Instr = new instructions.RelabelHints(labels)
+    override def instr: instructions.Instr = new instructions.RelabelHints(label +: labels)
     override def instrNeedsLabel: Boolean = false
-    override def handlerLabel(state: CodeGenState): Int = state.getLabelForRelabelError(labels)
+    override def handlerLabel(state: CodeGenState): Int = state.getLabelForRelabelError(label +: labels)
     // don't need to be limited to not hidden when the thing can never internally generate hints
     final override def optimise: StrictParsley[A] = p match {
-        case CharTok(c, x) => new CharTok(c, x, Label(labels: _*)).asInstanceOf[StrictParsley[A]]
-        case SupplementaryCharTok(c, x) => new SupplementaryCharTok(c, x, Label(labels: _*)).asInstanceOf[StrictParsley[A]]
-        case StringTok(s, x) => new StringTok(s, x, Label(labels: _*)).asInstanceOf[StrictParsley[A]]
-        case Satisfy(f) => new Satisfy(f, Label(labels: _*)).asInstanceOf[StrictParsley[A]]
-        case UniSatisfy(f) => new UniSatisfy(f, Label(labels: _*)).asInstanceOf[StrictParsley[A]]
-        case ErrorLabel(p, label2) if label2.nonEmpty => ErrorLabel(p, labels)
+        case CharTok(c, x) => new CharTok(c, x, Label(label, labels: _*)).asInstanceOf[StrictParsley[A]]
+        case SupplementaryCharTok(c, x) => new SupplementaryCharTok(c, x, Label(label, labels: _*)).asInstanceOf[StrictParsley[A]]
+        case StringTok(s, x) => new StringTok(s, x, Label(label, labels: _*)).asInstanceOf[StrictParsley[A]]
+        case Satisfy(f) => new Satisfy(f, Label(label, labels: _*)).asInstanceOf[StrictParsley[A]]
+        case UniSatisfy(f) => new UniSatisfy(f, Label(label, labels: _*)).asInstanceOf[StrictParsley[A]]
+        case ErrorLabel(p, _, _) => ErrorLabel(p, label, labels)
         case _ => this
     }
 
     // $COVERAGE-OFF$
-    final override def pretty(p: String): String = s"$p.label($labels)"
+    final override def pretty(p: String): String = s"$p.label(${label +: labels})"
     // $COVERAGE-ON$
 }
 private [deepembedding] final class ErrorHide[A](val p: StrictParsley[A]) extends ScopedUnary[A, A] {
@@ -91,8 +92,8 @@ private [deepembedding] final class ErrorLexical[A](val p: StrictParsley[A]) ext
 }
 
 private [backend] object ErrorLabel {
-    def apply[A](p: StrictParsley[A], labels: scala.Seq[String]): ErrorLabel[A] = new ErrorLabel(p, labels)
-    def unapply[A](self: ErrorLabel[A]): Some[(StrictParsley[A], scala.Seq[String])] = Some((self.p, self.labels))
+    def apply[A](p: StrictParsley[A], label: String, labels: scala.Seq[String]): ErrorLabel[A] = new ErrorLabel(p, label, labels)
+    def unapply[A](self: ErrorLabel[A]): Some[(StrictParsley[A], String, scala.Seq[String])] = Some((self.p, self.label, self.labels))
 }
 private [backend] object ErrorHide {
     def unapply[A](self: ErrorHide[A]): Some[StrictParsley[A]] = Some(self.p)

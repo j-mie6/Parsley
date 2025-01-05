@@ -5,8 +5,6 @@
  */
 package parsley.token.text
 
-import scala.Predef.{String => ScalaString}
-
 import parsley.Parsley
 import parsley.token.errors.ErrorConfig
 
@@ -23,7 +21,7 @@ import parsley.token.errors.ErrorConfig
   *   `Lexer`, which will depend on user-defined configuration. Please see the
   *   relevant documentation of these specific objects.
   */
-abstract class String private[text] {
+abstract class StringParsers private[text] {
     /** This parser will parse a single string literal, which may contain any
       * number of graphical UTF-16 unicode characters; including those that span multiple
       * 32-bit codepoints. It may contain escape sequences, and potentially
@@ -44,7 +42,7 @@ abstract class String private[text] {
       * @since 4.0.0
       * @note $disclaimer
       */
-    def fullUtf16: Parsley[ScalaString]
+    def fullUtf16: Parsley[String]
     /** This parser will parse a single string literal, which may contain any
       * number of graphic extended ascii characters (known as latin1). It may contain escape
       * sequences, and potentially support string gaps and zero-width characters
@@ -64,7 +62,7 @@ abstract class String private[text] {
       * @since 4.0.0
       * @note $disclaimer
       */
-    def latin1: Parsley[ScalaString]
+    def latin1: Parsley[String]
     /** This parser will parse a single string literal, which may contain any
       * number of graphic ascii characters. It may contain escape
       * sequences, and potentially support string gaps and zero-width characters
@@ -84,14 +82,14 @@ abstract class String private[text] {
       * @since 4.0.0
       * @note $disclaimer
       */
-    def ascii: Parsley[ScalaString]
+    def ascii: Parsley[String]
 }
 
-private [text] object String {
+private [text] object StringParsers {
     // don't need to use code points, high-surrogates are already out of range
     private def allCharsWithin(str: StringBuilder, bound: Int) = str.forall(_ <= bound)
-    private def isAscii(str: StringBuilder): Boolean = allCharsWithin(str, Character.MaxAscii)
-    private def isExtendedAscii(str: StringBuilder): Boolean = allCharsWithin(str, Character.MaxLatin1)
+    private def isAscii(str: StringBuilder): Boolean = allCharsWithin(str, CharacterParsers.MaxAscii)
+    private def isExtendedAscii(str: StringBuilder): Boolean = allCharsWithin(str, CharacterParsers.MaxLatin1)
 
     def ensureAscii(err: ErrorConfig)(p: Parsley[StringBuilder]): Parsley[StringBuilder] = err.filterStringNonAscii.filter(p)(isAscii(_))
     def ensureExtendedAscii(err: ErrorConfig)(p: Parsley[StringBuilder]): Parsley[StringBuilder] = err.filterStringNonLatin1.filter(p)(isExtendedAscii(_))

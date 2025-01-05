@@ -166,7 +166,7 @@ after the receiver of the method: it gets given the right argument type straight
 for leveraging this property:
 
 ```scala mdoc:silent
-import parsley.syntax.zipped.Zipped2
+import parsley.syntax.zipped.zippedSyntax2
 
 (nonzero, many(digit)).zipped(_ :: _)
 ```
@@ -180,7 +180,7 @@ Use this form of lifting when type-inference fails you. Otherwise, for clarity, 
 syntactic sugar for it:
 
 ```scala mdoc:silent
-import parsley.syntax.lift.{Lift2, Lift1}
+import parsley.syntax.lift.{liftSyntax1, liftSyntax2}
 
 val charCons = (c: Char, cs: List[Char]) => c :: cs
 

@@ -8,7 +8,7 @@ package parsley.token.text
 import scala.Predef.{String => SString, ArrowAssoc => _, _}
 import parsley.ParsleyTest
 
-import parsley.token.descriptions.text._
+import parsley.token.descriptions._
 import parsley.token.errors.ErrorConfig
 import org.scalactic.source.Position
 
@@ -31,14 +31,14 @@ class EscapeTests extends ParsleyTest {
         "@@" -> None,
     )
 
-    it should "handle single-character mappings" in cases(plain.copy(singleMap = Map(('n', '\n'), ('t', '\t'), ('b', '\b'))))(
+    it should "handle single-character mappings" in cases(plain.copy(mapping = Map(("n", '\n'), ("t", '\t'), ("b", '\b'))))(
         "\\n" -> Some('\n'),
         "\\b" -> Some('\b'),
         "\\t" -> Some('\t'),
         "\\\'" -> None,
     )
 
-    it should "handle multi-character mappings" in cases(plain.copy(multiMap = Map(("ab", '0'), ("aa", '1'), ("aaa", '2'), ("x", '3'))))(
+    it should "handle multi-character mappings" in cases(plain.copy(mapping = Map(("ab", '0'), ("aa", '1'), ("aaa", '2'), ("x", '3'))))(
         "\\ab" -> Some('0'),
         "\\aa" -> Some('1'),
         "\\aaa" -> Some('2'),

@@ -26,8 +26,7 @@ private [errors] final class TrivialErrorBuilder(presentationOffset: Int, outOfR
     private val expecteds = mutable.Set.empty[ExpectItem]
     private var unexpected = EmptyItem
     private val reasons = mutable.Set.empty[String]
-    private var _acceptingExpected = 0
-    private def acceptingExpected = _acceptingExpected == 0
+    private var acceptingExpected = true
 
     /** Updates the position of the error message.
       *
@@ -95,9 +94,10 @@ private [errors] final class TrivialErrorBuilder(presentationOffset: Int, outOfR
       * @param action the action to perform, during which no expected items can be accepted
       */
     def ignoreExpected(action: =>Unit): Unit = {
-        _acceptingExpected += 1
+        val old = acceptingExpected
+        acceptingExpected = false
         action
-        _acceptingExpected -= 1
+        acceptingExpected = old
     }
 
     /** Makes a `HintCollector` for collecting any hints from a `DefuncHints`

@@ -18,7 +18,7 @@ case class TestError(pos: (Int, Int), lines: TestErrorLines)
 
 sealed trait TestErrorLines
 case class VanillaError(unexpected: Option[TestErrorItem], expecteds: Set[TestErrorItem], reasons: Set[String], width: Int) extends TestErrorLines
-case class SpecialisedError(msgs: Set[String], width: Int) extends TestErrorLines
+case class SpecializedError(msgs: Set[String], width: Int) extends TestErrorLines
 
 sealed trait TestErrorItem
 case class Raw(item: String) extends TestErrorItem
@@ -26,7 +26,7 @@ case class Named(item: String) extends TestErrorItem
 case object EndOfInput extends TestErrorItem
 
 abstract class TestErrorBuilder extends ErrorBuilder[TestError] {
-    override def format(pos: Position, source: Source, lines: ErrorInfoLines): TestError = TestError(pos, lines)
+    override def build(pos: Position, source: Source, lines: ErrorInfoLines): TestError = TestError(pos, lines)
 
     type Position = (Int, Int)
     override def pos(line: Int, col: Int): Position = (line, col)
@@ -38,7 +38,7 @@ abstract class TestErrorBuilder extends ErrorBuilder[TestError] {
     override def vanillaError(unexpected: UnexpectedLine, expected: ExpectedLine, reasons: Messages, line: LineInfo): ErrorInfoLines = {
         VanillaError(unexpected, expected, reasons, line)
     }
-    override def specialisedError(msgs: Messages, line: LineInfo): ErrorInfoLines = SpecialisedError(msgs, line)
+    override def specializedError(msgs: Messages, line: LineInfo): ErrorInfoLines = SpecializedError(msgs, line)
 
     type ExpectedItems = Set[Item]
     override def combineExpectedItems(alts: Set[Item]): ExpectedItems = alts
@@ -56,7 +56,7 @@ abstract class TestErrorBuilder extends ErrorBuilder[TestError] {
     override def message(msg: String): Message = msg
 
     type LineInfo = Int
-    override def lineInfo(line: String, linesBefore: Seq[String], linesAfter: Seq[String], errorPointsAt: Int, errorWidth: Int): Int = errorWidth
+    override def lineInfo(line: String, linesBefore: Seq[String], linesAfter: Seq[String], lineNum: Int, errorPointsAt: Int, errorWidth: Int): Int = errorWidth
 
     override val numLinesBefore: Int = 2
     override val numLinesAfter: Int = 2

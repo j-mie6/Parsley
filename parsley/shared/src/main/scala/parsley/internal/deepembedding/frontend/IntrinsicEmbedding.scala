@@ -15,7 +15,7 @@ private [parsley] final class Lift2[A, B, C](private val f: (A, B) => C, p: Lazy
     // $COVERAGE-OFF$
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[C] = visitor.visit(this, context)(f, p, q)
 
-    override private[parsley] def prettyName = "lift.lift2"
+    private [parsley] var debugName = "lift2"
     // $COVERAGE-ON$
 }
 private [parsley] final class Lift3[A, B, C, D](private val f: (A, B, C) => D, p: LazyParsley[A], q: =>LazyParsley[B], r: =>LazyParsley[C])
@@ -25,7 +25,7 @@ private [parsley] final class Lift3[A, B, C, D](private val f: (A, B, C) => D, p
     // $COVERAGE-OFF$
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[D] = visitor.visit(this, context)(f, p, q, r)
 
-    override private[parsley] def prettyName = "lift.lift3"
+    private [parsley] var debugName = "lift3"
     // $COVERAGE-ON$
 }
 private [parsley] final class Local[S, A](val ref: Ref[S], p: LazyParsley[S], q: =>LazyParsley[A]) extends Binary[S, A, A](p, q) with UsesRef {
@@ -34,6 +34,6 @@ private [parsley] final class Local[S, A](val ref: Ref[S], p: LazyParsley[S], q:
     // $COVERAGE-OFF$
     override def visit[T, U[+_]](visitor: LazyParsleyIVisitor[T, U], context: T): U[A] = visitor.visit(this, context)(ref, p, q)
 
-    override private[parsley] def prettyName = "local"
+    private [parsley] var debugName = "local"
     // $COVERAGE-ON$
 }

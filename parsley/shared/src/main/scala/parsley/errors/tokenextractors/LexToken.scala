@@ -11,8 +11,8 @@ import parsley.Parsley, Parsley.{atomic, lookAhead, notFollowedBy}
 import parsley.Success
 import parsley.XAssert.assert
 import parsley.character.{item, stringOfSome}
-import parsley.combinator.{option, traverse5, traverse_}
-import parsley.errors.{ErrorBuilder, Token, TokenSpan}
+import parsley.combinator.{option, traverse}
+import parsley.errors.{ErrorBuilder, Token}
 import parsley.position
 
 import org.typelevel.scalaccompat.annotation.unused
@@ -58,11 +58,13 @@ trait LexToken { this: ErrorBuilder[_] =>
     def tokens: Seq[Parsley[String]]
 
     // this parser cannot and must not fail
-    private lazy val makeParser: Parsley[Either[::[(String, (Int, Int))], String]] = {
-        val toks = traverse5(tokens: _*)(p => option(lookAhead(atomic(p) <~> position.pos))).map(_.flatten).collect { case toks@(_::_) => toks }
-        // this can only fail if either there is no input (which there must be), or there is a token at the front, in which case `rawTok` is not parsed anyway
-        val rawTok = stringOfSome(traverse_(tokens: _*)(notFollowedBy) *> item)
-        toks <+> rawTok
+    private lazy val makeParser: Parsley[Either[::[(String, Int)], String]] = tokens match {
+        case t0 +: ts =>
+            val toks = traverse(t0, ts: _*)(p => option(lookAhead(atomic(p) <~> position.offset))).map(_.flatten).collect { case toks@(_::_) => toks }
+            // this can only fail if either there is no input (which there must be), or there is a token at the front, in which case `rawTok` is not parsed anyway
+            val rawTok = stringOfSome(traverse(t0, ts: _*)(notFollowedBy) *> item)
+            toks <+> rawTok
+        case _ => stringOfSome(_ => true).map(Right(_))
     }
 
     /** If the extractor is successful in identifying tokens that can be parsed from
@@ -79,11 +81,11 @@ trait LexToken { this: ErrorBuilder[_] =>
       * @note the `matchedToks` list is guaranteed to be non-empty
       * @since 4.0.0
       */
-    def selectToken(matchedToks: List[(String, (Int, Int))]): (String, (Int, Int)) = matchedToks.maxBy(_._2)
+    def selectToken(matchedToks: List[(String, Int)]): (String, Int) = matchedToks.maxBy(_._2)
 
-    private final def selectTokenAndBuild(matchedToks: ::[(String, (Int, Int))]): Token = {
-        val (name, (line, col)) = selectToken(matchedToks)
-        Token.Named(name, TokenSpan.Spanning(line-1, col-1))
+    private final def selectTokenAndBuild(matchedToks: ::[(String, Int)]): Token = {
+        val (name, offset) = selectToken(matchedToks)
+        Token.Named(name, offset)
     }
 
     private final def extractToken(cs: Iterable[Char]): Token = {

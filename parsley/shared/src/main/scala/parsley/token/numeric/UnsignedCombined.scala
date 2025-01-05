@@ -6,12 +6,13 @@
 package parsley.token.numeric
 
 import parsley.Parsley, Parsley.atomic
-import parsley.token.descriptions.numeric.NumericDesc
+import parsley.token.descriptions.NumericDesc
 import parsley.token.errors.ErrorConfig
 
 import org.typelevel.scalaccompat.annotation.unused
 
-private [token] final class UnsignedCombined(@unused desc: NumericDesc, integer: Integer, rational: Real, err: ErrorConfig) extends Combined(err) {
+private [token] final class UnsignedCombined(@unused desc: NumericDesc, integer: IntegerParsers, rational: RealParsers, err: ErrorConfig)
+    extends CombinedParsers(err) {
     override lazy val decimal: Parsley[Either[BigInt, BigDecimal]] = (atomic(rational.decimal) <+> integer.decimal).map(_.swap)
     override lazy val hexadecimal: Parsley[Either[BigInt, BigDecimal]] = (atomic(rational.hexadecimal) <+> integer.hexadecimal).map(_.swap)
     override lazy val octal: Parsley[Either[BigInt, BigDecimal]] = (atomic(rational.octal) <+> integer.octal).map(_.swap)
